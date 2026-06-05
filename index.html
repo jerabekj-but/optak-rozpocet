@@ -1,0 +1,918 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Struktura rozpočtu OP TAK</title>
+<style>
+  :root{
+    --bg:#f4f1ea; --panel:#ffffff; --ink:#1f2530; --ink-soft:#5b6472; --line:#e3ddd0;
+    --dot-mzdy:#2f5d8a;  --vkl-mzdy:#a9c6e0;
+    --dot-dalsi:#1f7a6b; --vkl-dalsi:#a6d8cd;
+    --dot-rezie:#b06a25; --vkl-rezie:#e7c596;
+    --ok:#1f7a4d; --warn:#b23b2e;
+    --shadow:0 1px 2px rgba(31,37,48,.06), 0 8px 28px rgba(31,37,48,.07);
+    --radius:14px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{
+    background:
+      radial-gradient(900px 500px at 88% -8%, rgba(47,93,138,.06), transparent 60%),
+      radial-gradient(700px 460px at -6% 108%, rgba(176,106,37,.06), transparent 55%),
+      var(--bg);
+    color:var(--ink);
+    font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+    line-height:1.5; -webkit-font-smoothing:antialiased;
+  }
+  .num{font-variant-numeric:tabular-nums; font-feature-settings:"tnum" 1;}
+
+  header.top{ max-width:1480px; margin:0 auto; padding:34px 32px 10px; }
+  header.top .eyebrow{ font-size:12px; letter-spacing:.22em; text-transform:uppercase; color:var(--ink-soft); font-weight:600; margin:0 0 6px; }
+  header.top h1{ font-family:Georgia,"Iowan Old Style","Times New Roman",serif; font-weight:600; font-size:38px; line-height:1.08; margin:0; letter-spacing:-.01em; }
+  header.top p.lead{ margin:10px 0 0; color:var(--ink-soft); max-width:780px; font-size:15px; }
+
+  .layout{ max-width:1480px; margin:0 auto; padding:22px 32px 60px;
+    display:grid; grid-template-columns:380px minmax(0,1fr); gap:26px; align-items:start; }
+
+  .panel{ background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow); }
+  .panel .hd{ padding:16px 18px 12px; border-bottom:1px solid var(--line); display:flex; align-items:baseline; justify-content:space-between; gap:10px; }
+  .panel .hd h2{ margin:0; font-size:13px; letter-spacing:.12em; text-transform:uppercase; color:var(--ink-soft); font-weight:700; }
+  .panel .hd .sub{font-size:11.5px; color:var(--ink-soft); letter-spacing:0; text-transform:none;}
+  .panel .bd{ padding:16px 18px; }
+
+  aside{ position:sticky; top:18px; display:flex; flex-direction:column; gap:18px; }
+
+  /* vstupy */
+  .field{margin-bottom:14px;}
+  .field:last-child{margin-bottom:0;}
+  .flabel{display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:5px;}
+  .flabel .lwrap{display:flex; align-items:center; gap:7px; flex-wrap:wrap;}
+  .flabel label{font-size:13px; color:var(--ink); font-weight:600; margin:0;}
+  .vcode{font-family:"Cascadia Code","SF Mono",Consolas,monospace; font-size:11px; font-weight:700; color:#fff; background:var(--ink); padding:1px 6px; border-radius:6px;}
+  .ofwhole{font-size:11px; font-weight:600; color:var(--ink-soft); background:#efe9dc; padding:1px 7px; border-radius:6px;}
+  .swatch{display:inline-block; width:11px; height:11px; border-radius:3px;}
+
+  .toggle{display:inline-flex; border:1px solid var(--line); border-radius:8px; overflow:hidden; background:#f1ece1; flex:none;}
+  .tg{appearance:none; border:0; background:transparent; padding:3px 10px; font-size:12px; cursor:pointer; color:var(--ink-soft); font-weight:700;}
+  .tg.on{background:var(--ink); color:#fff;}
+
+  .inwrap{position:relative; display:flex; align-items:center;}
+  .field input[type=text]{ width:100%; padding:10px 40px 10px 12px; font-size:16px; border:1px solid var(--line); border-radius:10px; background:#fbfaf6; color:var(--ink); transition:border-color .15s, box-shadow .15s, background .15s; }
+  .field input[type=text]:focus{outline:none; border-color:var(--dot-mzdy); box-shadow:0 0 0 3px rgba(47,93,138,.14); background:#fff;}
+  .field input:disabled{opacity:.55; cursor:not-allowed;}
+  .suffix{position:absolute; right:12px; font-size:13px; color:var(--ink-soft); pointer-events:none;}
+  .conv{margin-top:4px; font-size:12px; color:var(--ink-soft);}
+  .conv b{color:var(--ink); font-weight:600;}
+  .fhelp{margin-top:3px; font-size:11.5px; color:var(--ink-soft); line-height:1.35;}
+  .field.derived input{background:#f0ece2; color:var(--ink-soft);}
+  .field.bad input{border-color:var(--warn); background:#fdf3f1;}
+
+  .check{ margin-top:2px; padding:11px 13px; border-radius:10px; font-size:13.5px; display:flex; gap:9px; align-items:flex-start; line-height:1.4; }
+  .check.ok{background:rgba(31,122,77,.09); color:#155f3b; border:1px solid rgba(31,122,77,.22);}
+  .check.bad{background:rgba(178,59,46,.08); color:#8c2a20; border:1px solid rgba(178,59,46,.25);}
+  .check .ico{font-weight:800;}
+
+  .radios{display:flex; flex-direction:column; gap:7px;}
+  .radio{font-size:13.5px; color:var(--ink); display:flex; align-items:center; gap:8px; cursor:pointer;}
+  .radio input{accent-color:var(--dot-mzdy); width:16px; height:16px;}
+  .subhint{font-size:12px; color:var(--ink-soft); margin:2px 0 11px; line-height:1.4;}
+
+  .presets{display:flex; flex-wrap:wrap; gap:7px;}
+  .btn{ appearance:none; border:1px solid var(--line); background:#fbfaf6; color:var(--ink); font-size:12.5px; padding:8px 12px; border-radius:999px; cursor:pointer; font-weight:600; transition:background .15s, border-color .15s, transform .05s; }
+  .btn:hover{background:#fff; border-color:#cfc7b6;}
+  .btn:active{transform:translateY(1px);}
+  .btn.solid{background:var(--ink); color:#fff; border-color:var(--ink);}
+  .btn.solid:hover{background:#000;}
+
+  /* vizualizace */
+  .vizwrap{display:flex; flex-direction:column; gap:18px;}
+  .axisrow{display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;}
+  .axisrow .legend{font-size:12.5px; color:var(--ink-soft);}
+  .axisrow .legend b{color:var(--ink); font-weight:600;}
+  .fundkey{display:flex; gap:14px; font-size:12.5px; color:var(--ink-soft);}
+  .fundkey .k{display:flex; align-items:center; gap:6px;}
+  .fundkey .box{width:22px; height:12px; border-radius:3px; border:1px solid rgba(0,0,0,.08);}
+  .fundkey .box.dot{background:linear-gradient(90deg,var(--dot-mzdy),var(--dot-rezie));}
+  .fundkey .box.vkl{background:linear-gradient(90deg,var(--vkl-mzdy),var(--vkl-rezie));}
+
+  #mosaic{ position:relative; width:100%; height:480px; border:1px solid var(--line); border-radius:12px; background:#faf8f3; overflow:hidden; }
+  .cell{ position:absolute; overflow:hidden; border-radius:4px; transition:background .12s; }
+  .colcap{ position:absolute; text-align:center; font-size:12px; color:var(--ink-soft); transform:translateY(-100%); top:-2px; }
+
+  /* popisky obdélníků – vždy viditelné, pevné místo (nahoře dotace, dole vklad) */
+  .clabel{ position:absolute; z-index:6; pointer-events:none; background:rgba(31,37,48,.85); color:#fff;
+    border-radius:7px; padding:4px 8px; font-size:11px; line-height:1.25; white-space:nowrap;
+    box-shadow:0 1px 5px rgba(0,0,0,.28); display:flex; flex-direction:column; }
+  .clabel.bottom{ transform:translateY(-100%); }
+  .clabel .cl-top{opacity:.82; font-size:10px;}
+  .clabel .cl-val{font-weight:700; font-size:12px;}
+  .clabel .cl-pct{opacity:.92; font-size:11px;}
+
+  .divider{ position:absolute; height:16px; transform:translateY(-50%); cursor:ns-resize; z-index:7; display:flex; align-items:center; justify-content:center; }
+  .divider .bar{ width:100%; height:0; border-top:2px dashed rgba(255,255,255,.92); }
+  .divider .grip{ position:absolute; width:48px; height:16px; border-radius:9px; background:#fff; border:1px solid rgba(0,0,0,.14); box-shadow:0 2px 6px rgba(0,0,0,.2); display:flex; align-items:center; justify-content:center; }
+  .divider .grip span{width:14px; height:2px; background:#9aa3b0; border-radius:2px; box-shadow:0 4px 0 #9aa3b0;}
+  .divider:hover .grip, .divider.active .grip{border-color:var(--dot-mzdy);}
+  .divider.active .grip{box-shadow:0 0 0 3px rgba(47,93,138,.18), 0 2px 6px rgba(0,0,0,.2);}
+  .draghint{font-size:12.5px; color:var(--ink-soft); margin-top:4px;}
+  .manualflag{ display:none; margin-top:9px; padding:9px 12px; border-radius:10px; font-size:13px;
+    background:rgba(47,93,138,.08); border:1px solid rgba(47,93,138,.25); color:#274b6e; align-items:center; gap:10px; }
+  .manualflag.show{display:flex;}
+
+  /* fakultní sekce – dva oddělené řádky, žádný překryv */
+  .facgrid{display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px;}
+  .stat{ border:1px solid var(--line); border-radius:11px; padding:12px 13px; background:#fbfaf6; }
+  .stat .lab{font-size:11.5px; color:var(--ink-soft); font-weight:600; line-height:1.25; min-height:30px;}
+  .stat .val{font-size:20px; font-weight:700; margin-top:6px;}
+  .stat.accentd{border-left:4px solid var(--dot-rezie);}
+  .stat.accentm{border-left:4px solid var(--dot-mzdy);}
+  .stat.accentt{border-left:4px solid var(--ink); background:#f3f1ec;}
+  .stat.accentf{border-left:4px solid #6b7b8c;}
+  .stat.pos .val{color:var(--ok);} .stat.neg .val{color:var(--warn);}
+
+  .cmpbar{margin-top:16px;}
+  .cmprow{display:flex; align-items:center; gap:12px; margin:9px 0;}
+  .cmplab{width:172px; flex:none; font-size:12.5px; color:var(--ink); font-weight:600;}
+  .cmplab small{display:block; color:var(--ink-soft); font-weight:500; font-size:11px;}
+  .cmptrack{position:relative; flex:1; height:30px; background:#f0ece2; border:1px solid var(--line); border-radius:8px; overflow:hidden;}
+  .cmpfill{position:absolute; left:0; top:0; height:100%; border-radius:7px 0 0 7px; transition:width .12s;}
+  .cmpfill.f12{background:#6b7b8c;}
+  .cmpfill.f8{background:var(--dot-rezie);}
+  .cmpval{width:130px; flex:none; text-align:right; font-weight:700; font-size:13px;}
+  .facnote{font-size:12.5px; color:var(--ink-soft); margin-top:11px; line-height:1.45;}
+
+  /* ÚTKO vizualizace – propojená s horní komponentou */
+  #utkobar{ position:relative; width:100%; height:104px; border:1px solid var(--line); border-radius:12px; background:#faf8f3; overflow:hidden; margin-top:4px; }
+  .useg{position:absolute; top:0; height:100%; overflow:hidden;}
+  .useg.mzdy{background:var(--vkl-mzdy);}
+  .useg.rezie{background:var(--vkl-rezie);}
+  .useg.dopl{background:#6b7b8c;}
+  .ulabel{position:absolute; z-index:6; pointer-events:none; top:10px; background:rgba(31,37,48,.85); color:#fff;
+    border-radius:7px; padding:5px 9px; font-size:11px; line-height:1.3; white-space:nowrap; box-shadow:0 1px 5px rgba(0,0,0,.28); display:flex; flex-direction:column;}
+  .ulabel .ul-top{opacity:.82; font-size:10px;}
+  .ulabel .ul-val{font-weight:700; font-size:13px;}
+  .udiv{position:absolute; top:0; height:100%; width:16px; transform:translateX(-50%); cursor:ew-resize; z-index:7; display:flex; align-items:center; justify-content:center;}
+  .udiv .ubar{height:100%; width:0; border-left:2px dashed rgba(31,37,48,.55);}
+  .udiv .ugrip{position:absolute; width:16px; height:48px; border-radius:9px; background:#fff; border:1px solid rgba(0,0,0,.14); box-shadow:0 2px 6px rgba(0,0,0,.2); display:flex; align-items:center; justify-content:center;}
+  .udiv .ugrip span{height:18px; width:2px; background:#9aa3b0; border-radius:2px; box-shadow:4px 0 0 #9aa3b0;}
+  .udiv:hover .ugrip,.udiv.active .ugrip{border-color:var(--dot-mzdy);}
+  .ucap{position:absolute; top:6px; left:10px; right:10px; display:flex; justify-content:space-between; font-size:11.5px; color:var(--ink-soft); z-index:6; pointer-events:none;}
+  .utotal{margin-top:9px; font-size:13px; color:var(--ink);}
+  .utotal b{font-weight:700;}
+
+  /* tabulka Kompenzace pro ÚTKO */
+  .kfx{font-size:12px; color:var(--ink-soft); margin:0 0 8px;}
+  table.komp{width:100%; border-collapse:collapse; font-size:13.5px;}
+  table.komp th, table.komp td{padding:10px; border-bottom:1px solid var(--line); text-align:left; vertical-align:middle;}
+  table.komp th{font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-soft);}
+  table.komp td.r, table.komp th.r{text-align:right;}
+  table.komp .cin{display:flex; align-items:center; gap:7px;}
+  table.komp .cin .iw{position:relative; display:inline-flex; align-items:center;}
+  table.komp .cin input{width:118px; padding:7px 34px 7px 10px; font-size:14px; border:1px solid var(--line); border-radius:8px; background:#fbfaf6; color:var(--ink);}
+  table.komp .cin.narrow input{width:84px;}
+  table.komp .cin input:focus{outline:none; border-color:var(--dot-mzdy); box-shadow:0 0 0 3px rgba(47,93,138,.14); background:#fff;}
+  table.komp .cin .us{position:absolute; right:10px; font-size:12px; color:var(--ink-soft); pointer-events:none;}
+  table.komp tr.total td{font-weight:700; background:#f6f3ec;}
+  table.komp tr.diff td{font-weight:700; border-top:2px solid var(--ink); border-bottom:none; background:#f3f1ec; font-size:15px; padding-top:13px; padding-bottom:13px;}
+  table.komp tr.diff.neg td.r{color:var(--warn);}
+  table.komp tr.diff.pos td.r{color:var(--ok);}
+  tr.group.komp td{background:#eef4ee; color:#2f5a3a;}
+
+  /* tabulka */
+  table{width:100%; border-collapse:collapse; font-size:13.5px;}
+  th,td{text-align:left; padding:9px 10px; border-bottom:1px solid var(--line);}
+  th{font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-soft);}
+  td.r,th.r{text-align:right;}
+  td.formula{color:var(--ink-soft); font-family:"Cascadia Code","SF Mono",Consolas,"Liberation Mono",monospace; font-size:12px;}
+  tr.group td{background:#f6f3ec; font-weight:700; font-size:12px; letter-spacing:.04em; text-transform:uppercase; color:var(--ink-soft);}
+  tr.group.utko td{background:#eef3f7; color:#274b6e;}
+  tr.total td{font-weight:700;}
+  td .dotline{display:inline-block; width:9px; height:9px; border-radius:2px; margin-right:7px; vertical-align:baseline;}
+
+  footer.foot{max-width:1480px; margin:0 auto; padding:0 32px 50px; color:var(--ink-soft); font-size:12.5px; line-height:1.55;}
+  .pill{display:inline-block; padding:1px 7px; border-radius:6px; background:#efe9dc; font-size:12px; color:#6a5f49;}
+
+  @media (max-width:1100px){
+    .layout{grid-template-columns:1fr;}
+    aside{position:static;}
+    .facgrid{grid-template-columns:repeat(2,1fr);}
+  }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <p class="eyebrow">Kalkulačka · OP TAK · vysokoškolský projekt s vkladem</p>
+  <h1>Struktura rozpočtu OP TAK</h1>
+  <p class="lead">Rozpočet rozložený do dvou os: podle <b>typu nákladu</b> (mzdy / další náklady / režie) a podle <b>zdroje</b> (dotace / vlastní vklad). Plocha obdélníku odpovídá hodnotě v Kč. Hodnoty lze zadávat v % i v Kč a vklad rozdělit rovnoměrně nebo nerovnoměrně.</p>
+</header>
+
+<div class="layout">
+
+  <!-- LEVÝ SLOUPEC -->
+  <aside>
+    <section class="panel">
+      <div class="hd"><h2>Vstupní hodnoty</h2><span class="sub">v1–v6</span></div>
+      <div class="bd">
+
+        <div class="field" id="f-v1">
+          <div class="flabel"><div class="lwrap"><span class="vcode">v1</span><label for="v1">Celkový rozpočet projektu</label></div></div>
+          <div class="inwrap"><input id="v1" type="text" inputmode="numeric" value="1000000"><span class="suffix">Kč</span></div>
+          <div class="fhelp">Základ, ke kterému se vztahují v2–v5 (a z něj plynoucí dotace pro v6).</div>
+        </div>
+
+        <div class="field" id="f-v2">
+          <div class="flabel">
+            <div class="lwrap"><span class="vcode">v2</span><span class="swatch" style="background:var(--dot-mzdy)"></span><label for="v2">Mzdové prostředky</label><span class="ofwhole">z celkového rozpočtu</span></div>
+            <div class="toggle" id="tgw-v2"><button type="button" class="tg on" id="tg-v2-pct">%</button><button type="button" class="tg" id="tg-v2-kc">Kč</button></div>
+          </div>
+          <div class="inwrap"><input id="v2" type="text" inputmode="decimal" value="83,33"><span class="suffix" id="suf-v2">%</span></div>
+          <div class="conv" id="cv-v2"></div>
+        </div>
+
+        <div class="field" id="f-v3">
+          <div class="flabel">
+            <div class="lwrap"><span class="vcode">v3</span><span class="swatch" style="background:var(--dot-dalsi)"></span><label for="v3">Další náklady</label><span class="ofwhole">z celkového rozpočtu</span></div>
+            <div class="toggle" id="tgw-v3"><button type="button" class="tg on" id="tg-v3-pct">%</button><button type="button" class="tg" id="tg-v3-kc">Kč</button></div>
+          </div>
+          <div class="inwrap"><input id="v3" type="text" inputmode="decimal" value="0,00"><span class="suffix" id="suf-v3">%</span></div>
+          <div class="conv" id="cv-v3"></div>
+        </div>
+
+        <div class="field" id="f-v4">
+          <div class="flabel">
+            <div class="lwrap"><span class="vcode">v4</span><span class="swatch" style="background:var(--dot-rezie)"></span><label for="v4">Režie</label><span class="ofwhole">z celkového rozpočtu</span></div>
+            <div class="toggle" id="tgw-v4"><button type="button" class="tg on" id="tg-v4-pct">%</button><button type="button" class="tg" id="tg-v4-kc">Kč</button></div>
+          </div>
+          <div class="inwrap"><input id="v4" type="text" inputmode="decimal" value="16,67"><span class="suffix" id="suf-v4">%</span></div>
+          <div class="conv" id="cv-v4"></div>
+        </div>
+
+        <div class="check" id="sumcheck"><span class="ico">✓</span><span id="sumtext"></span></div>
+
+        <div class="field" id="f-v5" style="margin-top:14px;">
+          <div class="flabel">
+            <div class="lwrap"><span class="vcode">v5</span><label for="v5">Vlastní vklad</label><span class="ofwhole">z celkového rozpočtu</span></div>
+            <div class="toggle" id="tgw-v5"><button type="button" class="tg on" id="tg-v5-pct">%</button><button type="button" class="tg" id="tg-v5-kc">Kč</button></div>
+          </div>
+          <div class="inwrap"><input id="v5" type="text" inputmode="decimal" value="15"><span class="suffix" id="suf-v5">%</span></div>
+          <div class="conv" id="cv-v5"></div>
+          <div class="fhelp" id="v5help">Celková výše vlastního vkladu. Při nerovnoměrném rozdělení se dopočítává ze zadaných položek.</div>
+        </div>
+
+        <div class="field" id="f-v6">
+          <div class="flabel">
+            <div class="lwrap"><span class="vcode">v6</span><label for="v6">Celofakultní výdaje</label><span class="ofwhole" style="background:#e7ddcf">z dotace</span></div>
+            <div class="toggle" id="tgw-v6"><button type="button" class="tg on" id="tg-v6-pct">%</button><button type="button" class="tg" id="tg-v6-kc">Kč</button></div>
+          </div>
+          <div class="inwrap"><input id="v6" type="text" inputmode="decimal" value="22,38"><span class="suffix" id="suf-v6">%</span></div>
+          <div class="conv" id="cv-v6"></div>
+          <div class="fhelp">Pozor: vztahuje se k celkové dotaci (h10), ne k celkovému rozpočtu — dle vzorce h12 = h10 × v6.</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="hd"><h2>Rozdělení vkladu do položek</h2></div>
+      <div class="bd">
+        <div class="radios" style="margin-bottom:10px;">
+          <label class="radio"><input type="radio" name="dist" id="dist-rovno" checked> Rovnoměrné — stejné % vkladu ve všech položkách</label>
+          <label class="radio"><input type="radio" name="dist" id="dist-nerovno"> Nerovnoměrné — zadejte vklad po položkách</label>
+        </div>
+        <div id="nerovnoBlock" style="display:none;">
+          <div class="subhint">Zadejte vklad jednotlivých položek (v % dané položky nebo v Kč). Tažením v mozaice se hodnoty přepočítají automaticky.</div>
+
+          <div class="field" id="f-m0">
+            <div class="flabel"><div class="lwrap"><span class="swatch" style="background:var(--vkl-mzdy)"></span><label for="m0">Vklad ve mzdách</label></div>
+              <div class="toggle"><button type="button" class="tg on" id="tg-m0-pct">%</button><button type="button" class="tg" id="tg-m0-kc">Kč</button></div></div>
+            <div class="inwrap"><input id="m0" type="text" inputmode="decimal" value="15"><span class="suffix" id="suf-m0">%</span></div>
+            <div class="conv" id="cv-m0"></div>
+          </div>
+          <div class="field" id="f-m1">
+            <div class="flabel"><div class="lwrap"><span class="swatch" style="background:var(--vkl-dalsi)"></span><label for="m1">Vklad v dalších nákladech</label></div>
+              <div class="toggle"><button type="button" class="tg on" id="tg-m1-pct">%</button><button type="button" class="tg" id="tg-m1-kc">Kč</button></div></div>
+            <div class="inwrap"><input id="m1" type="text" inputmode="decimal" value="15"><span class="suffix" id="suf-m1">%</span></div>
+            <div class="conv" id="cv-m1"></div>
+          </div>
+          <div class="field" id="f-m2">
+            <div class="flabel"><div class="lwrap"><span class="swatch" style="background:var(--vkl-rezie)"></span><label for="m2">Vklad v režiích</label></div>
+              <div class="toggle"><button type="button" class="tg on" id="tg-m2-pct">%</button><button type="button" class="tg" id="tg-m2-kc">Kč</button></div></div>
+            <div class="inwrap"><input id="m2" type="text" inputmode="decimal" value="15"><span class="suffix" id="suf-m2">%</span></div>
+            <div class="conv" id="cv-m2"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="hd"><h2>Předvolby</h2></div>
+      <div class="bd">
+        <div class="presets">
+          <button class="btn" data-preset="r1667">Režie z dotace 16,67 %</button>
+          <button class="btn" data-preset="r0">Režie z dotace 0 % z celku</button>
+          <button class="btn" id="presetSmarteon">Smarteon</button>
+          <button class="btn solid" id="resetSplits">Zrušit ruční úpravy</button>
+        </div>
+        <div class="manualflag" id="manualflag"><span></span></div>
+      </div>
+    </section>
+  </aside>
+
+  <!-- PRAVÝ SLOUPEC -->
+  <main class="vizwrap">
+
+    <section class="panel">
+      <div class="hd"><h2>Mozaika rozpočtu</h2>
+        <div class="fundkey"><span class="k"><span class="box dot"></span> dotace (nahoře)</span><span class="k"><span class="box vkl"></span> vklad (dole)</span></div>
+      </div>
+      <div class="bd">
+        <div class="axisrow"><div class="legend">Šířka sloupce = podíl typu nákladu · výška pásu = podíl zdroje · <b>plocha = Kč</b></div></div>
+        <div id="mosaic"></div>
+        <div class="draghint">↕ Táhněte za <b>oddělovač</b> ve sloupci a přesouvejte jeho část mezi dotaci a vklad. Celkový vklad zůstává zachován — co přibude jinde, ubude. „Zrušit ruční úpravy“ vrátí rovnoměrné rozdělení.</div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="hd"><h2>Dotace, vklad a režie fakulty</h2></div>
+      <div class="bd">
+        <div class="facgrid" style="grid-template-columns:repeat(3,minmax(0,1fr));">
+          <div class="stat"><div class="lab">Celková dotace na projektu <span class="pill">h10</span></div><div class="val num" id="s-h10"></div></div>
+          <div class="stat"><div class="lab">Celkový vklad na projektu <span class="pill">h11</span></div><div class="val num" id="s-h11"></div></div>
+          <div class="stat"><div class="lab">Celofakultní režie z dotace <span class="pill">h12</span></div><div class="val num" id="s-h12"></div></div>
+        </div>
+        <div class="cmpbar">
+          <div class="cmprow">
+            <div class="cmplab">Celofakultní režie<small>h12 = h10 × v6</small></div>
+            <div class="cmptrack"><div class="cmpfill f12" id="bar-h12"></div></div>
+            <div class="cmpval num" id="amt-h12"></div>
+          </div>
+          <div class="cmprow">
+            <div class="cmplab">Režie celkově<small>h7 = v1 × v4</small></div>
+            <div class="cmptrack"><div class="cmpfill f8" id="bar-h7"></div></div>
+            <div class="cmpval num" id="amt-h7"></div>
+          </div>
+        </div>
+        <div class="facnote" id="facnote"></div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="hd"><h2>Náklady ÚTKO</h2><span class="sub">h14 · h15 · h16</span></div>
+      <div class="bd">
+        <div class="facgrid" style="grid-template-columns:repeat(4,minmax(0,1fr));">
+          <div class="stat accentf" id="s-h13-card"><div class="lab">Doplatek režií fakultě <span class="pill">h13</span></div><div class="val num" id="s-h13"></div></div>
+          <div class="stat accentd" id="s-h14-card"><div class="lab">Náklady ÚTKO v režiích <span class="pill">h14</span></div><div class="val num" id="s-h14"></div></div>
+          <div class="stat accentm" id="s-h15-card"><div class="lab">Náklady ÚTKO ve mzdách <span class="pill">h15</span></div><div class="val num" id="s-h15"></div></div>
+          <div class="stat accentt" id="s-h16-card"><div class="lab">Náklady ÚTKO celkem <span class="pill">h16</span></div><div class="val num" id="s-h16"></div></div>
+        </div>
+
+        <div class="axisrow" style="margin-top:14px;"><div class="legend">Šířka = h16 = h13 + h14 + h15 · oddělovač dělí vklad na režie (h14) a mzdy (h15). Mění se tažením v mozaice i zde.</div></div>
+        <div id="utkobar">
+          <div class="useg rezie" id="useg-h14"></div>
+          <div class="useg mzdy" id="useg-h15"></div>
+          <div class="useg dopl" id="useg-h13"></div>
+          <div class="ulabel" id="ulab-h14"></div>
+          <div class="ulabel" id="ulab-h15"></div>
+          <div class="ulabel" id="ulab-h13"></div>
+          <div class="udiv" id="udiv"><div class="ubar"></div><div class="ugrip"><span></span></div></div>
+        </div>
+        <div class="utotal" id="utotal"></div>
+        <div class="facnote">↔ Tažením oddělovače (nebo v horní mozaice) přesouváte vklad mezi režiemi (h14) a mzdami (h15). <b>Vklad h14 + h15 zůstává v Kč stejný</b> (= h11); mění se jen jeho rozložení a tím i doplatek h13.</div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="hd"><h2>Kompenzace pro ÚTKO</h2><span class="sub">úvazky kmenových zaměstnanců · h17–h21</span></div>
+      <div class="bd" style="padding-top:10px;">
+        <div class="kfx">Superhrubá mzda = úvazek (v %) ÷ 100 × jednotková mzda × 1,3338 (koeficient superhrubé mzdy) × počet měsíců.</div>
+        <table class="komp">
+          <thead><tr><th style="width:34px;">#</th><th>Úvazek</th><th>Jednotková mzda</th><th>Počet měsíců</th><th class="r">Superhrubá mzda</th></tr></thead>
+          <tbody>
+            <tr>
+              <td class="num">1</td>
+              <td><div class="cin"><span class="vcode">v7</span><span class="iw"><input id="v7" type="text" inputmode="decimal" value="10"><span class="us">%</span></span></div></td>
+              <td><div class="cin"><span class="vcode">v8</span><span class="iw"><input id="v8" type="text" inputmode="numeric" value="45000"><span class="us">Kč</span></span></div></td>
+              <td><div class="cin narrow"><span class="vcode">v13</span><span class="iw"><input id="v13" type="text" inputmode="numeric" value="12"><span class="us">měs.</span></span></div></td>
+              <td class="r num" id="s-h17"></td>
+            </tr>
+            <tr>
+              <td class="num">2</td>
+              <td><div class="cin"><span class="vcode">v9</span><span class="iw"><input id="v9" type="text" inputmode="decimal" value="10"><span class="us">%</span></span></div></td>
+              <td><div class="cin"><span class="vcode">v10</span><span class="iw"><input id="v10" type="text" inputmode="numeric" value="45000"><span class="us">Kč</span></span></div></td>
+              <td><div class="cin narrow"><span class="vcode">v14</span><span class="iw"><input id="v14" type="text" inputmode="numeric" value="12"><span class="us">měs.</span></span></div></td>
+              <td class="r num" id="s-h18"></td>
+            </tr>
+            <tr>
+              <td class="num">3</td>
+              <td><div class="cin"><span class="vcode">v11</span><span class="iw"><input id="v11" type="text" inputmode="decimal" value="10"><span class="us">%</span></span></div></td>
+              <td><div class="cin"><span class="vcode">v12</span><span class="iw"><input id="v12" type="text" inputmode="numeric" value="45000"><span class="us">Kč</span></span></div></td>
+              <td><div class="cin narrow"><span class="vcode">v15</span><span class="iw"><input id="v15" type="text" inputmode="numeric" value="12"><span class="us">měs.</span></span></div></td>
+              <td class="r num" id="s-h19"></td>
+            </tr>
+            <tr class="total"><td></td><td colspan="3">Celková kompenzace kmenovým zaměstnancům <span class="pill">h20</span> = h17 + h18 + h19</td><td class="r num" id="s-h20"></td></tr>
+            <tr class="diff" id="komp-diff"><td></td><td colspan="3">Rozdíl pro ÚTKO <span class="pill">h21</span> = h20 − h16</td><td class="r num" id="s-h21"></td></tr>
+          </tbody>
+        </table>
+        <div class="facnote" id="kompnote"></div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="hd"><h2>Výpočtové jádro — všechny hodnoty</h2></div>
+      <div class="bd" style="padding-top:6px;">
+        <table>
+          <thead><tr><th style="width:40px;">#</th><th>Položka</th><th>Vzorec</th><th class="r">Hodnota</th><th class="r">% rozpočtu</th></tr></thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<footer class="foot">
+  <p><b>Zadávání v % i v Kč:</b> u v2–v6 a u položkového vkladu přepíná jednotku přepínač „% / Kč"; vedle pole se průběžně dopočítává druhá jednotka. v2–v5 se vztahují k celkovému rozpočtu (v1), v6 k celkové dotaci (h10).</p>
+  <p><b>Náklady ÚTKO:</b> h13 = h12 − h7 (doplatek režií), h14 = h9 (vklad v režiích), h15 = h3 (vklad ve mzdách), h16 = h13 + h14 + h15 (celkem). Při „dalších nákladech" = 0 % je <b>h16 konstantní</b> — h12, h7 i celkový vklad (h11 = h14 + h15) se tažením nemění, posouvá se jen rozdělení mzdy ↔ režie.</p>
+  <p><b>Konzistence:</b> kontrolní součty platí, když v2 + v3 + v4 = 100 %. Celofakultní výdaje 22,38 % jsou dle vámi zadané hodnoty.</p>
+</footer>
+
+<script>
+"use strict";
+var nf0 = new Intl.NumberFormat('cs-CZ', {maximumFractionDigits:0});
+var nf2 = new Intl.NumberFormat('cs-CZ', {minimumFractionDigits:2, maximumFractionDigits:2});
+function kc(v){ return nf0.format(Math.round(v)) + ' Kč'; }
+function pct(v){ return nf2.format(v) + ' %'; }
+function plainPct(v){ return (Math.round(v*100)/100).toString().replace('.', ','); }
+function plainKc(v){ return String(Math.round(v)); }
+function parseNum(str){
+  if(str===null||str===undefined) return NaN;
+  var s = String(str).trim().replace(/[\s\u00A0]/g,'').replace(',', '.');
+  if(s==='') return NaN;
+  var n = Number(s); return isFinite(n)?n:NaN;
+}
+var $ = function(id){ return document.getElementById(id); };
+var cssVar = function(n){ return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); };
+
+var CATS = [
+  {key:'mzdy', name:'Mzdové prostředky', dotVar:'--dot-mzdy', vklVar:'--vkl-mzdy'},
+  {key:'dalsi',name:'Další náklady',     dotVar:'--dot-dalsi',vklVar:'--vkl-dalsi'},
+  {key:'rezie',name:'Režie',             dotVar:'--dot-rezie',vklVar:'--vkl-rezie'}
+];
+
+var fieldMode = {v2:'pct',v3:'pct',v4:'pct',v5:'pct',v6:'pct',m0:'pct',m1:'pct',m2:'pct'};
+var splits = [0.15,0.15,0.15];
+var distMode = 'rovno';
+
+/* ---------- vstupy a převody ---------- */
+function pctOfBase(raw, mode, base){
+  if(isNaN(raw)) return 0;
+  if(mode==='kc') return base>0 ? raw/base*100 : 0;
+  return raw;
+}
+function readInputs(){
+  var v1 = parseNum($('v1').value);
+  var budget = isNaN(v1)?0:v1;
+  return {
+    v1:v1, budget:budget,
+    p2: pctOfBase(parseNum($('v2').value), fieldMode.v2, budget),
+    p3: pctOfBase(parseNum($('v3').value), fieldMode.v3, budget),
+    p4: pctOfBase(parseNum($('v4').value), fieldMode.v4, budget),
+    p5: pctOfBase(parseNum($('v5').value), fieldMode.v5, budget),
+    v6raw: parseNum($('v6').value), v6mode: fieldMode.v6,
+    v7: parseNum($('v7').value), v8: parseNum($('v8').value),
+    v9: parseNum($('v9').value), v10: parseNum($('v10').value),
+    v11: parseNum($('v11').value), v12: parseNum($('v12').value),
+    v13: parseNum($('v13').value), v14: parseNum($('v14').value), v15: parseNum($('v15').value)
+  };
+}
+function baseFor(id,R){
+  if(id==='v6') return R.h10;
+  if(id==='m0') return R.catTot[0];
+  if(id==='m1') return R.catTot[1];
+  if(id==='m2') return R.catTot[2];
+  return R.budget;
+}
+function representedPct(id,R){
+  var raw = parseNum($(id).value);
+  if(isNaN(raw)) return 0;
+  if(fieldMode[id]==='kc'){ var b=baseFor(id,R); return b>0?raw/b*100:0; }
+  return raw;
+}
+
+/* ---------- výpočet ---------- */
+function syncSplits(inp){
+  if(distMode==='rovno'){
+    var f5=(isNaN(inp.p5)?0:inp.p5)/100; f5=Math.max(0,Math.min(1,f5));
+    splits=[f5,f5,f5];
+  }
+  for(var i=0;i<3;i++){ if(isNaN(splits[i])) splits[i]=0; splits[i]=Math.max(0,Math.min(1,splits[i])); }
+}
+function compute(inp){
+  var v1=isNaN(inp.v1)?0:inp.v1;
+  var f2=(isNaN(inp.p2)?0:inp.p2)/100, f3=(isNaN(inp.p3)?0:inp.p3)/100, f4=(isNaN(inp.p4)?0:inp.p4)/100;
+  var catTot=[v1*f2, v1*f3, v1*f4];
+  var dotPart=[], vklPart=[];
+  for(var i=0;i<3;i++){ dotPart.push(catTot[i]*(1-splits[i])); vklPart.push(catTot[i]*splits[i]); }
+  var h10=dotPart[0]+dotPart[1]+dotPart[2];
+  var h11=vklPart[0]+vklPart[1]+vklPart[2];
+  var h8=dotPart[2];
+  var f6;
+  if(inp.v6mode==='kc'){ f6 = h10>0 ? (isNaN(inp.v6raw)?0:inp.v6raw)/h10 : 0; }
+  else { f6 = (isNaN(inp.v6raw)?0:inp.v6raw)/100; }
+  var h12=h10*f6;
+  var h13=h12-catTot[2];  // doplatek režií = h12 − h7 (h7 = celková režie)
+  var h14=vklPart[2];     // Náklady ÚTKO v režiích = h9 (vklad v režiích)
+  var h15=vklPart[0];     // Náklady ÚTKO ve mzdách = h3 (vklad ve mzdách)
+  var h16=h13+h14+h15;    // Náklady ÚTKO celkem
+  // Kompenzace pro ÚTKO – úvazky kmenových zaměstnanců
+  var K=1.3338;
+  function uvz(x){ return (isNaN(x)?0:x)/100; }
+  function castka(x){ return isNaN(x)?0:x; }
+  var h17=uvz(inp.v7)*castka(inp.v8)*K*castka(inp.v13);
+  var h18=uvz(inp.v9)*castka(inp.v10)*K*castka(inp.v14);
+  var h19=uvz(inp.v11)*castka(inp.v12)*K*castka(inp.v15);
+  var h20=h17+h18+h19;
+  var h21=h20-h16;
+  return {
+    v1:v1, budget:v1, catTot:catTot, dotPart:dotPart, vklPart:vklPart,
+    h1:catTot[0],h2:dotPart[0],h3:vklPart[0],
+    h4:catTot[1],h5:dotPart[1],h6:vklPart[1],
+    h7:catTot[2],h8:h8,h9:vklPart[2],
+    h10:h10,h11:h11,h12:h12,h13:h13,h14:h14,h15:h15,h16:h16,
+    h17:h17,h18:h18,h19:h19,h20:h20,h21:h21,
+    f6:f6, p6:f6*100,
+    sumPct:(isNaN(inp.p2)?0:inp.p2)+(isNaN(inp.p3)?0:inp.p3)+(isNaN(inp.p4)?0:inp.p4)
+  };
+}
+
+/* ---------- validace ---------- */
+function renderCheck(R){
+  var box=$('sumcheck'), txt=$('sumtext');
+  var s=Math.round(R.sumPct*100)/100;
+  var ok=Math.abs(s-100)<0.005;
+  box.className='check '+(ok?'ok':'bad');
+  box.querySelector('.ico').textContent=ok?'✓':'!';
+  txt.innerHTML = ok ? 'Součet v2 + v3 + v4 = <b>100,00 %</b>.'
+                     : 'Součet v2 + v3 + v4 = <b>'+pct(s)+'</b> (musí být 100 %).';
+  ['f-v2','f-v3','f-v4'].forEach(function(id){ $(id).classList.toggle('bad', !ok); });
+}
+
+/* ---------- mozaika (postavena jednou, jen přemísťována) ---------- */
+var GAP=6;
+var MO={built:false,host:null,topPad:18,els:[]};
+var MO_GEO={usableH:0,topPad:18};
+function chipHTML(name,kind,val,total){
+  var p=total>0?val/total*100:0;
+  return '<span class="cl-top">'+name+' · '+kind+'</span><span class="cl-val num">'+kc(val)+'</span><span class="cl-pct num">'+pct(p)+'</span>';
+}
+function buildMosaic(){
+  var host=$('mosaic'); MO.host=host; host.innerHTML=''; MO.els=[];
+  for(var i=0;i<3;i++){
+    var cap=document.createElement('div'); cap.className='colcap';
+    var cdot=document.createElement('div'); cdot.className='cell';
+    var cvkl=document.createElement('div'); cvkl.className='cell';
+    var dl=document.createElement('div'); dl.className='clabel';
+    var vl=document.createElement('div'); vl.className='clabel bottom';
+    var div=document.createElement('div'); div.className='divider';
+    div.innerHTML='<div class="bar"></div><div class="grip"><span></span></div>'; div.dataset.cat=i;
+    host.appendChild(cap); host.appendChild(cdot); host.appendChild(cvkl);
+    host.appendChild(dl); host.appendChild(vl); host.appendChild(div);
+    MO.els.push({cap:cap,dot:cdot,vkl:cvkl,dl:dl,vl:vl,div:div});
+    attachDrag(div,i);
+  }
+  MO.built=true;
+}
+function placeCell(el,o){
+  if(o.h<0.5||o.w<0.5){ el.style.display='none'; return; }
+  el.style.display='block';
+  el.style.left=o.left+'px'; el.style.top=o.top+'px';
+  el.style.width=Math.max(0,o.w)+'px'; el.style.height=Math.max(0,o.h)+'px';
+  el.style.background=o.bg;
+  el.title=o.title+': '+kc(o.val)+'  ('+pct(o.total>0?o.val/o.total*100:0)+' rozpočtu)';
+}
+function layoutMosaic(R){
+  if(!MO.built) buildMosaic();
+  var host=MO.host, W=host.clientWidth, H=host.clientHeight, topPad=MO.topPad;
+  var usableH=H-topPad-6; MO_GEO.usableH=usableH; MO_GEO.topPad=topPad;
+  var fr=R.catTot.map(function(t){ return R.v1>0?t/R.v1:0; });
+  var fsum=fr[0]+fr[1]+fr[2];
+  var nVis=fr.filter(function(v){return v>0;}).length;
+  var innerW=W-GAP*Math.max(0,nVis-1)-4;
+  var x=2;
+  for(var i=0;i<3;i++){
+    var E=MO.els[i];
+    if(fsum<=0||fr[i]<=0){ E.cap.style.display='none'; E.dot.style.display='none'; E.vkl.style.display='none'; E.dl.style.display='none'; E.vl.style.display='none'; E.div.style.display='none'; continue; }
+    var colW=innerW*(fr[i]/fsum);
+    var dotH=usableH*(1-splits[i]);
+    var vklH=usableH*splits[i];
+    var colTop=topPad;
+    E.cap.style.display='block'; E.cap.style.left=x+'px'; E.cap.style.width=colW+'px'; E.cap.style.top=topPad+'px';
+    E.cap.textContent=CATS[i].name+' · '+pct(fr[i]*100);
+    placeCell(E.dot,{left:x,top:colTop,w:colW,h:dotH,bg:cssVar(CATS[i].dotVar),title:CATS[i].name+' — dotace',val:R.dotPart[i],total:R.v1});
+    placeCell(E.vkl,{left:x,top:colTop+dotH,w:colW,h:vklH,bg:cssVar(CATS[i].vklVar),title:CATS[i].name+' — vklad',val:R.vklPart[i],total:R.v1});
+    E.dl.style.display='flex'; E.dl.style.left=x+'px'; E.dl.style.top=(topPad+2)+'px'; E.dl.style.maxWidth=Math.max(colW-4,86)+'px';
+    E.dl.innerHTML=chipHTML(CATS[i].name,'dotace',R.dotPart[i],R.v1);
+    E.vl.style.display='flex'; E.vl.style.left=x+'px'; E.vl.style.top=(topPad+usableH-2)+'px'; E.vl.style.maxWidth=Math.max(colW-4,86)+'px';
+    E.vl.innerHTML=chipHTML(CATS[i].name,'vklad',R.vklPart[i],R.v1);
+    E.div.style.display='flex'; E.div.style.left=x+'px'; E.div.style.width=colW+'px'; E.div.style.top=(colTop+dotH)+'px';
+    x+=colW+GAP;
+  }
+}
+
+/* ---------- tažení: zachování celkového vkladu ---------- */
+var dragCat=null;
+function ensureNerovno(){
+  if(distMode!=='nerovno'){
+    distMode='nerovno';
+    $('dist-nerovno').checked=true; $('dist-rovno').checked=false;
+    $('nerovnoBlock').style.display='block';
+    $('v5').readOnly=true; $('f-v5').classList.add('derived');
+  }
+}
+function attachDrag(divEl,catIdx){
+  divEl.addEventListener('pointerdown',function(e){ e.preventDefault(); try{divEl.setPointerCapture(e.pointerId);}catch(_){} dragCat=catIdx; divEl.classList.add('active'); });
+  divEl.addEventListener('pointermove',function(e){
+    if(dragCat!==catIdx) return;
+    var rect=MO.host.getBoundingClientRect();
+    var y=e.clientY-rect.top-MO_GEO.topPad;
+    var frac=1-(y/MO_GEO.usableH); frac=Math.max(0,Math.min(1,frac));
+    ensureNerovno(); applyDrag(catIdx,frac); update();
+  });
+  function end(e){ if(dragCat===catIdx){ dragCat=null; divEl.classList.remove('active'); try{divEl.releasePointerCapture(e.pointerId);}catch(_){} } }
+  divEl.addEventListener('pointerup',end); divEl.addEventListener('pointercancel',end);
+}
+function applyDrag(j,fracDesired){
+  var inp=readInputs(); var v1=isNaN(inp.v1)?0:inp.v1;
+  var f=[(isNaN(inp.p2)?0:inp.p2)/100,(isNaN(inp.p3)?0:inp.p3)/100,(isNaN(inp.p4)?0:inp.p4)/100];
+  var catTot=[v1*f[0],v1*f[1],v1*f[2]];
+  if(catTot[j]<=0) return;
+  var V=[splits[0]*catTot[0],splits[1]*catTot[1],splits[2]*catTot[2]];
+  var P=V[0]+V[1]+V[2];
+  var others=[0,1,2].filter(function(i){return i!==j;});
+  var capOthers=0; others.forEach(function(i){capOthers+=catTot[i];});
+  var VjMax=Math.min(catTot[j],P), VjMin=Math.max(0,P-capOthers);
+  var VjNew=Math.max(VjMin,Math.min(VjMax,fracDesired*catTot[j]));
+  var delta=VjNew-V[j]; V[j]=VjNew;
+  var remaining=-delta, active=others.slice(), guard=0;
+  while(Math.abs(remaining)>1e-9 && active.length>0 && guard<12){
+    guard++;
+    var weights=active.map(function(i){return remaining<0?V[i]:(catTot[i]-V[i]);});
+    var wsum=weights.reduce(function(a,b){return a+b;},0);
+    if(wsum<=1e-12) break;
+    var next=[], applied=0;
+    for(var k=0;k<active.length;k++){
+      var i=active[k]; var share=remaining*(weights[k]/wsum); var target=V[i]+share;
+      if(target<=0){ applied+=(0-V[i]); V[i]=0; }
+      else if(target>=catTot[i]){ applied+=(catTot[i]-V[i]); V[i]=catTot[i]; }
+      else { applied+=share; V[i]=target; next.push(i); }
+    }
+    remaining-=applied; active=next;
+  }
+  for(var m=0;m<3;m++){ splits[m]=catTot[m]>0?V[m]/catTot[m]:0; }
+}
+
+/* ---------- ÚTKO vizualizace (propojená) ---------- */
+var UT={built:false};
+function buildUtko(){
+  UT.host=$('utkobar'); UT.built=true;
+  var d=$('udiv');
+  d.addEventListener('pointerdown',function(e){ e.preventDefault(); try{d.setPointerCapture(e.pointerId);}catch(_){} UT.drag=true; d.classList.add('active'); });
+  d.addEventListener('pointermove',function(e){
+    if(!UT.drag) return;
+    var R=compute(readInputs());
+    var rect=UT.host.getBoundingClientRect(); var W=UT.host.clientWidth;
+    var x=e.clientX-rect.left;
+    var tot=R.h16>0?R.h16:1;
+    var regionW=W*((R.h14+R.h15)/tot);          // pixelová šířka bloku vkladu h14+h15
+    if(regionW<=0 || R.h7<=0) return;
+    var frac=Math.max(0,Math.min(1,x/regionW)); // podíl h14 (režie) v bloku vkladu
+    var desiredH14=frac*(R.h14+R.h15);          // požadovaný vklad v režiích
+    ensureNerovno(); applyDrag(2, desiredH14/R.h7); update();
+  });
+  function end(e){ if(UT.drag){ UT.drag=false; d.classList.remove('active'); try{d.releasePointerCapture(e.pointerId);}catch(_){} } }
+  d.addEventListener('pointerup',end); d.addEventListener('pointercancel',end);
+}
+function layoutUtko(R){
+  if(!UT.built) buildUtko();
+  var host=UT.host, W=host.clientWidth;
+  var tot=R.h16>0?R.h16:1;
+  var w14=W*(R.h14/tot), w15=W*(R.h15/tot), w13=W*(R.h13/tot);
+  // pořadí: h14 (režie) | h15 (mzdy) | h13 (doplatek)
+  $('useg-h14').style.left='0px'; $('useg-h14').style.width=Math.max(0,w14)+'px';
+  $('useg-h15').style.left=Math.max(0,w14)+'px'; $('useg-h15').style.width=Math.max(0,w15)+'px';
+  $('useg-h13').style.left=Math.max(0,w14+w15)+'px'; $('useg-h13').style.width=Math.max(0,w13)+'px';
+  var l14=$('ulab-h14'); l14.style.left='8px'; l14.style.right='auto'; l14.style.top='10px'; l14.style.alignItems='flex-start';
+  l14.innerHTML='<span class="ul-top">v režiích · h14</span><span class="ul-val num">'+kc(R.h14)+'</span>';
+  var l15=$('ulab-h15'); l15.style.left=Math.max(8,w14+8)+'px'; l15.style.right='auto'; l15.style.top='48px'; l15.style.alignItems='flex-start';
+  l15.innerHTML='<span class="ul-top">ve mzdách · h15</span><span class="ul-val num">'+kc(R.h15)+'</span>';
+  var l13=$('ulab-h13'); l13.style.right='8px'; l13.style.left='auto'; l13.style.top='10px'; l13.style.alignItems='flex-end';
+  l13.innerHTML='<span class="ul-top">doplatek · h13</span><span class="ul-val num">'+kc(R.h13)+'</span>';
+  $('udiv').style.left=Math.max(0,w14)+'px';
+  $('utotal').innerHTML='Celkem h16 = <b class="num">'+kc(R.h16)+'</b> = doplatek h13 <b class="num">'+kc(R.h13)+'</b> + vklad h14+h15 <b class="num">'+kc(R.h14+R.h15)+'</b>';
+}
+
+/* ---------- fakultní sekce ---------- */
+function renderFaculty(R){
+  $('s-h10').textContent=kc(R.h10);
+  $('s-h11').textContent=kc(R.h11);
+  $('s-h12').textContent=kc(R.h12);
+  var maxv=Math.max(R.h12,R.h7,1);
+  $('bar-h12').style.width=(R.h12/maxv*100)+'%'; $('amt-h12').textContent=kc(R.h12);
+  $('bar-h7').style.width=(R.h7/maxv*100)+'%';  $('amt-h7').textContent=kc(R.h7);
+  var note=$('facnote');
+  if(R.h13>=0) note.innerHTML='Celofakultní režie (h12) převyšuje celkovou režii projektu (h7) o <b>'+kc(R.h13)+'</b> — tento rozdíl je doplatek režií fakultě (h13, viz Náklady ÚTKO).';
+  else note.innerHTML='Celková režie projektu (h7) převyšuje celofakultní režii (h12) o <b>'+kc(Math.abs(R.h13))+'</b> — doplatek h13 je záporný (viz Náklady ÚTKO).';
+}
+function renderUTKO(R){
+  $('s-h13').textContent=(R.h13>=0?'+ ':'− ')+kc(Math.abs(R.h13));
+  $('s-h13-card').classList.toggle('pos',R.h13>=0); $('s-h13-card').classList.toggle('neg',R.h13<0);
+  $('s-h14').textContent=(R.h14<0?'− ':'')+kc(Math.abs(R.h14));
+  $('s-h15').textContent=(R.h15<0?'− ':'')+kc(Math.abs(R.h15));
+  $('s-h16').textContent=(R.h16<0?'− ':'')+kc(Math.abs(R.h16));
+  $('s-h14-card').classList.toggle('neg',R.h14<0); $('s-h14-card').classList.toggle('pos',R.h14>=0);
+  $('s-h15-card').classList.toggle('neg',R.h15<0); $('s-h15-card').classList.toggle('pos',R.h15>=0);
+  layoutUtko(R);
+}
+function renderKomp(R){
+  $('s-h17').textContent=kc(R.h17);
+  $('s-h18').textContent=kc(R.h18);
+  $('s-h19').textContent=kc(R.h19);
+  $('s-h20').textContent=kc(R.h20);
+  $('s-h21').textContent=(R.h21<0?'− ':'+ ')+kc(Math.abs(R.h21));
+  var row=$('komp-diff'); row.classList.toggle('neg',R.h21<0); row.classList.toggle('pos',R.h21>=0);
+  var n=$('kompnote');
+  if(R.h21<0) n.innerHTML='h21 = h20 − h16. Hodnota je <b>záporná</b> → pro ÚTKO <b>peníze chybí</b> (schází '+kc(Math.abs(R.h21))+'). Kladné číslo by znamenalo, že peníze pro ÚTKO přebývají.';
+  else n.innerHTML='h21 = h20 − h16. Hodnota je <b>kladná</b> → pro ÚTKO <b>peníze přebývají</b> ('+kc(R.h21)+'). Záporné číslo by znamenalo, že pro ÚTKO peníze chybí.';
+}
+
+/* ---------- tabulka ---------- */
+function pctOf(R,v){ return R.v1>0?v/R.v1*100:0; }
+function dotsw(varName){ return '<span class="dotline" style="background:'+cssVar(varName)+'"></span>'; }
+function row(R,num,name,formula,val,opts){
+  opts=opts||{};
+  return '<tr class="'+(opts.cls||'')+'"><td class="num">'+num+'</td><td>'+(opts.swatch||'')+name+'</td><td class="formula">'+formula+'</td><td class="r num">'+kc(val)+'</td><td class="r num">'+pct(pctOf(R,val))+'</td></tr>';
+}
+function grp(label,cls){ return '<tr class="group '+(cls||'')+'"><td></td><td colspan="4">'+label+'</td></tr>'; }
+function renderTable(R){
+  var t='';
+  t+=grp('Mzdové prostředky');
+  t+=row(R,'h1','Mzdové prostředky celkově','v1 × v2',R.h1,{swatch:dotsw('--dot-mzdy')});
+  t+=row(R,'h2','— z dotace','v1 × v2 × (1 − v5)',R.h2);
+  t+=row(R,'h3','— z vkladu','v1 × v2 × v5',R.h3);
+  t+=grp('Další náklady');
+  t+=row(R,'h4','Další náklady celkově','v1 × v3',R.h4,{swatch:dotsw('--dot-dalsi')});
+  t+=row(R,'h5','— z dotace','v1 × v3 × (1 − v5)',R.h5);
+  t+=row(R,'h6','— z vkladu','v1 × v3 × v5',R.h6);
+  t+=grp('Režie');
+  t+=row(R,'h7','Režie celkově','v1 × v4',R.h7,{swatch:dotsw('--dot-rezie')});
+  t+=row(R,'h8','— z dotace','v1 × v4 × (1 − v5)',R.h8);
+  t+=row(R,'h9','— z vkladu','v1 × v4 × v5',R.h9);
+  t+=grp('Souhrn financování a fakulta');
+  t+=row(R,'h10','Celková dotace na projektu','v1 × (1 − v5)',R.h10,{cls:'total'});
+  t+=row(R,'h11','Celkový vklad na projektu','v1 × v5',R.h11,{cls:'total'});
+  t+=row(R,'h12','Celofakultní režie z dotace','h10 × v6',R.h12);
+  t+=grp('Náklady ÚTKO','utko');
+  t+=row(R,'h13','Doplatek režií fakultě','h12 − h7',R.h13);
+  t+=row(R,'h14','Náklady ÚTKO v režiích','h9',R.h14);
+  t+=row(R,'h15','Náklady ÚTKO ve mzdách','h3',R.h15);
+  t+=row(R,'h16','Náklady ÚTKO celkem','h13 + h14 + h15',R.h16,{cls:'total'});
+  t+=grp('Kompenzace pro ÚTKO','komp');
+  t+=row(R,'h17','Superhrubá mzda č. 1','(v7 / 100) × v8 × 1,3338 × v13',R.h17);
+  t+=row(R,'h18','Superhrubá mzda č. 2','(v9 / 100) × v10 × 1,3338 × v14',R.h18);
+  t+=row(R,'h19','Superhrubá mzda č. 3','(v11 / 100) × v12 × 1,3338 × v15',R.h19);
+  t+=row(R,'h20','Celková kompenzace kmenovým zaměstnancům','h17 + h18 + h19',R.h20,{cls:'total'});
+  t+=row(R,'h21','Rozdíl pro ÚTKO','h20 − h16',R.h21,{cls:'total'});
+  $('tbody').innerHTML=t;
+}
+
+/* ---------- odvozené vstupy + převody ---------- */
+function setSuffix(id){ var s=$('suf-'+id); if(s) s.textContent=fieldMode[id]==='kc'?'Kč':'%'; }
+function refreshConversions(R){
+  ['v2','v3','v4','v5','v6','m0','m1','m2'].forEach(function(id){
+    var el=$('cv-'+id); if(!el) return;
+    var base=baseFor(id,R); var curPct=representedPct(id,R); var kcVal=base*curPct/100;
+    if(fieldMode[id]==='kc') el.innerHTML='= <b>'+pct(curPct)+'</b>';
+    else el.innerHTML='= <b>'+kc(kcVal)+'</b>';
+  });
+}
+function refreshDerivedInputs(R){
+  ['m0','m1','m2'].forEach(function(id,i){
+    var base=R.catTot[i];
+    $(id).disabled=!(base>0);
+    if(document.activeElement===$(id)) return;
+    if(fieldMode[id]==='kc') $(id).value=plainKc(R.vklPart[i]);
+    else $(id).value=plainPct(base>0?R.vklPart[i]/base*100:0);
+  });
+  if(distMode==='nerovno' && document.activeElement!==$('v5')){
+    if(fieldMode.v5==='kc') $('v5').value=plainKc(R.h11);
+    else $('v5').value=plainPct(R.budget>0?R.h11/R.budget*100:0);
+  }
+}
+function renderManual(R){
+  var f=$('manualflag'); f.classList.toggle('show', distMode==='nerovno');
+  if(distMode==='nerovno'){
+    var eff=R.budget>0?R.h11/R.budget*100:0;
+    f.querySelector('span').innerHTML='Vklad rozdělen nerovnoměrně. <b>Celkový vklad zůstává:</b> <span class="num">'+kc(R.h11)+'</span> ('+pct(eff)+').';
+  }
+}
+
+/* ---------- hlavní update ---------- */
+function update(){
+  var inp=readInputs(); syncSplits(inp); var R=compute(inp);
+  renderCheck(R); layoutMosaic(R); renderFaculty(R); renderUTKO(R); renderKomp(R); renderTable(R);
+  refreshDerivedInputs(R); refreshConversions(R); renderManual(R);
+}
+
+/* ---------- události ---------- */
+['v1','v2','v3','v4','v6'].forEach(function(id){ $(id).addEventListener('input', update); });
+['v7','v8','v9','v10','v11','v12','v13','v14','v15'].forEach(function(id){ $(id).addEventListener('input', update); });
+$('v5').addEventListener('input', function(){
+  if(distMode==='nerovno') rescaleFromV5();
+  update();
+});
+function rescaleFromV5(){
+  var inp=readInputs(); var b=inp.budget;
+  var catTot=[b*(isNaN(inp.p2)?0:inp.p2)/100,b*(isNaN(inp.p3)?0:inp.p3)/100,b*(isNaN(inp.p4)?0:inp.p4)/100];
+  var oldT=splits[0]*catTot[0]+splits[1]*catTot[1]+splits[2]*catTot[2];
+  var newT=b*(isNaN(inp.p5)?0:inp.p5)/100;
+  var sum=catTot[0]+catTot[1]+catTot[2];
+  if(oldT<=1e-9){ var f=sum>0?newT/sum:0; splits=[f,f,f]; return; }
+  var ratio=newT/oldT;
+  for(var i=0;i<3;i++){ var V=splits[i]*catTot[i]*ratio; V=Math.max(0,Math.min(catTot[i],V)); splits[i]=catTot[i]>0?V/catTot[i]:0; }
+}
+['m0','m1','m2'].forEach(function(id,idx){
+  $(id).addEventListener('input', function(){
+    var inp=readInputs(); var b=inp.budget;
+    var catTot=[b*(isNaN(inp.p2)?0:inp.p2)/100,b*(isNaN(inp.p3)?0:inp.p3)/100,b*(isNaN(inp.p4)?0:inp.p4)/100];
+    var raw=parseNum($(id).value); var s;
+    if(fieldMode[id]==='kc') s=catTot[idx]>0?(isNaN(raw)?0:raw)/catTot[idx]:0;
+    else s=(isNaN(raw)?0:raw)/100;
+    splits[idx]=Math.max(0,Math.min(1,s));
+    ensureNerovno(); update();
+  });
+});
+
+function setFieldMode(id,newMode){
+  if(fieldMode[id]===newMode) return;
+  var R=compute(readInputs());
+  var base=baseFor(id,R); var curPct=representedPct(id,R);
+  fieldMode[id]=newMode;
+  if(newMode==='kc') $(id).value=plainKc(base*curPct/100);
+  else $(id).value=plainPct(curPct);
+  setSuffix(id); markToggle(id); update();
+}
+function markToggle(id){ var p=$('tg-'+id+'-pct'), k=$('tg-'+id+'-kc'); if(p) p.classList.toggle('on',fieldMode[id]==='pct'); if(k) k.classList.toggle('on',fieldMode[id]==='kc'); }
+['v2','v3','v4','v5','v6','m0','m1','m2'].forEach(function(id){
+  var p=$('tg-'+id+'-pct'), k=$('tg-'+id+'-kc');
+  if(p) p.addEventListener('click',function(){ setFieldMode(id,'pct'); });
+  if(k) k.addEventListener('click',function(){ setFieldMode(id,'kc'); });
+});
+
+function setDist(mode){
+  distMode=mode;
+  $('dist-rovno').checked=mode==='rovno'; $('dist-nerovno').checked=mode==='nerovno';
+  $('nerovnoBlock').style.display=mode==='nerovno'?'block':'none';
+  $('v5').readOnly=(mode==='nerovno'); $('f-v5').classList.toggle('derived',mode==='nerovno');
+  if(mode==='rovno'){ var inp=readInputs(); var f5=(isNaN(inp.p5)?0:inp.p5)/100; splits=[f5,f5,f5]; }
+  update();
+}
+$('dist-rovno').addEventListener('change',function(){ if(this.checked) setDist('rovno'); });
+$('dist-nerovno').addEventListener('change',function(){ if(this.checked) setDist('nerovno'); });
+$('resetSplits').addEventListener('click',function(){ setDist('rovno'); });
+
+// Smarteon – částečná předvolba: nastaví jen uvedená pole, ostatní nechá beze změny
+$('presetSmarteon').addEventListener('click',function(){
+  $('v1').value='3610674';                 // v1 je vždy v Kč
+  [['v2','3008895'],['v3','0'],['v4','601779']].forEach(function(p){
+    fieldMode[p[0]]='kc'; setSuffix(p[0]); markToggle(p[0]); $(p[0]).value=p[1];
+  });
+  $('v7').value='20'; $('v9').value='20'; $('v11').value='10';
+  update();
+});
+
+var PRESETS={
+  r1667:{v1:'1000000',v2:'83,33',v3:'0,00',v4:'16,67',v5:'15',v6:'22,38'},
+  r0:{v1:'1000000',v2:'100,00',v3:'0,00',v4:'0,00',v5:'15',v6:'22,38'}
+};
+document.querySelectorAll('[data-preset]').forEach(function(b){
+  b.addEventListener('click',function(){
+    var p=PRESETS[b.dataset.preset];
+    ['v2','v3','v4','v5','v6','m0','m1','m2'].forEach(function(id){ fieldMode[id]='pct'; setSuffix(id); markToggle(id); });
+    $('v1').value=p.v1; $('v2').value=p.v2; $('v3').value=p.v3; $('v4').value=p.v4; $('v5').value=p.v5; $('v6').value=p.v6;
+    setDist('rovno');
+  });
+});
+
+window.addEventListener('resize',function(){ var R=compute(readInputs()); layoutMosaic(R); layoutUtko(R); });
+if(window.ResizeObserver){
+  new ResizeObserver(function(){ var R=compute(readInputs()); layoutMosaic(R); }).observe($('mosaic'));
+  new ResizeObserver(function(){ layoutUtko(compute(readInputs())); }).observe($('utkobar'));
+}
+
+/* init */
+['v2','v3','v4','v5','v6','m0','m1','m2'].forEach(function(id){ setSuffix(id); markToggle(id); });
+buildMosaic(); buildUtko(); update();
+</script>
+</body>
+</html>
