@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Struktura rozpočtu OP TAK</title>
+<title>Struktura rozpočtu</title>
 <style>
   :root{
     --bg:#f4f1ea; --panel:#ffffff; --ink:#1f2530; --ink-soft:#5b6472; --line:#e3ddd0;
@@ -63,6 +63,7 @@
   .field input:disabled{opacity:.55; cursor:not-allowed;}
   .suffix{position:absolute; right:12px; font-size:13px; color:var(--ink-soft); pointer-events:none;}
   .conv{margin-top:4px; font-size:12px; color:var(--ink-soft);}
+  .convwarn{color:var(--warn); font-size:12px;}
   .conv b{color:var(--ink); font-weight:600;}
   .fhelp{margin-top:3px; font-size:11.5px; color:var(--ink-soft); line-height:1.35;}
   .field.derived input{background:#f0ece2; color:var(--ink-soft);}
@@ -115,6 +116,7 @@
   .divider .grip span{width:14px; height:2px; background:#9aa3b0; border-radius:2px; box-shadow:0 4px 0 #9aa3b0;}
   .divider:hover .grip, .divider.active .grip{border-color:var(--dot-mzdy);}
   .divider.active .grip{box-shadow:0 0 0 3px rgba(47,93,138,.18), 0 2px 6px rgba(0,0,0,.2);}
+  .divider.locked{cursor:not-allowed;} .divider.locked .grip{opacity:.4;}
   .draghint{font-size:12.5px; color:var(--ink-soft); margin-top:4px;}
   .manualflag{ display:none; margin-top:9px; padding:9px 12px; border-radius:10px; font-size:13px;
     background:rgba(47,93,138,.08); border:1px solid rgba(47,93,138,.25); color:#274b6e; align-items:center; gap:10px; }
@@ -129,6 +131,7 @@
   .stat.accentm{border-left:4px solid var(--dot-mzdy);}
   .stat.accentt{border-left:4px solid var(--ink); background:#f3f1ec;}
   .stat.accentf{border-left:4px solid #6b7b8c;}
+  .stat.accentg{border-left:4px solid var(--dot-dalsi);}
   .stat.pos .val{color:var(--ok);} .stat.neg .val{color:var(--warn);}
 
   .cmpbar{margin-top:16px;}
@@ -147,6 +150,7 @@
   .useg{position:absolute; top:0; height:100%; overflow:hidden;}
   .useg.mzdy{background:var(--vkl-mzdy);}
   .useg.rezie{background:var(--vkl-rezie);}
+  .useg.dalsi{background:var(--vkl-dalsi);}
   .useg.dopl{background:#6b7b8c;}
   .ulabel{position:absolute; z-index:6; pointer-events:none; top:10px; background:rgba(31,37,48,.85); color:#fff;
     border-radius:7px; padding:5px 9px; font-size:11px; line-height:1.3; white-space:nowrap; box-shadow:0 1px 5px rgba(0,0,0,.28); display:flex; flex-direction:column;}
@@ -157,6 +161,7 @@
   .udiv .ugrip{position:absolute; width:16px; height:48px; border-radius:9px; background:#fff; border:1px solid rgba(0,0,0,.14); box-shadow:0 2px 6px rgba(0,0,0,.2); display:flex; align-items:center; justify-content:center;}
   .udiv .ugrip span{height:18px; width:2px; background:#9aa3b0; border-radius:2px; box-shadow:4px 0 0 #9aa3b0;}
   .udiv:hover .ugrip,.udiv.active .ugrip{border-color:var(--dot-mzdy);}
+  .udiv.locked{cursor:not-allowed;} .udiv.locked .ugrip{opacity:.4;}
   .ucap{position:absolute; top:6px; left:10px; right:10px; display:flex; justify-content:space-between; font-size:11.5px; color:var(--ink-soft); z-index:6; pointer-events:none;}
   .utotal{margin-top:9px; font-size:13px; color:var(--ink);}
   .utotal b{font-weight:700;}
@@ -203,8 +208,8 @@
 <body>
 
 <header class="top">
-  <p class="eyebrow">Kalkulačka · OP TAK · vysokoškolský projekt s vkladem</p>
-  <h1>Struktura rozpočtu OP TAK</h1>
+  <p class="eyebrow">Kalkulačka</p>
+  <h1>Struktura rozpočtu</h1>
   <p class="lead">Rozpočet rozložený do dvou os: podle <b>typu nákladu</b> (mzdy / další náklady / režie) a podle <b>zdroje</b> (dotace / vlastní vklad). Plocha obdélníku odpovídá hodnotě v Kč. Hodnoty lze zadávat v % i v Kč a vklad rozdělit rovnoměrně nebo nerovnoměrně.</p>
 </header>
 
@@ -217,7 +222,7 @@
       <div class="bd">
 
         <div class="field" id="f-v1">
-          <div class="flabel"><div class="lwrap"><span class="vcode">v1</span><label for="v1">Celkový rozpočet projektu</label></div></div>
+          <div class="flabel"><div class="lwrap"><span class="vcode">v1</span><label for="v1">Celkový rozpočet projektu (dotace + vklad)</label></div></div>
           <div class="inwrap"><input id="v1" type="text" inputmode="numeric" value="1000000"><span class="suffix">Kč</span></div>
           <div class="fhelp">Základ, ke kterému se vztahují v2–v5 (a z něj plynoucí dotace pro v6).</div>
         </div>
@@ -312,6 +317,7 @@
           <button class="btn" data-preset="r1667">Režie z dotace 16,67 %</button>
           <button class="btn" data-preset="r0">Režie z dotace 0 % z celku</button>
           <button class="btn" id="presetSmarteon">Smarteon</button>
+          <button class="btn" id="presetGacr">GAČR JJ</button>
           <button class="btn solid" id="resetSplits">Zrušit ruční úpravy</button>
         </div>
         <div class="manualflag" id="manualflag"><span></span></div>
@@ -358,27 +364,30 @@
     </section>
 
     <section class="panel">
-      <div class="hd"><h2>Náklady ÚTKO</h2><span class="sub">h14 · h15 · h16</span></div>
+      <div class="hd"><h2>Náklady ÚTKO</h2><span class="sub">h13 · h14 · h15 · h22 · h16</span></div>
       <div class="bd">
-        <div class="facgrid" style="grid-template-columns:repeat(4,minmax(0,1fr));">
+        <div class="facgrid" style="grid-template-columns:repeat(5,minmax(0,1fr));">
           <div class="stat accentf" id="s-h13-card"><div class="lab">Doplatek režií fakultě <span class="pill">h13</span></div><div class="val num" id="s-h13"></div></div>
           <div class="stat accentd" id="s-h14-card"><div class="lab">Náklady ÚTKO v režiích <span class="pill">h14</span></div><div class="val num" id="s-h14"></div></div>
           <div class="stat accentm" id="s-h15-card"><div class="lab">Náklady ÚTKO ve mzdách <span class="pill">h15</span></div><div class="val num" id="s-h15"></div></div>
+          <div class="stat accentg" id="s-h22-card"><div class="lab">Náklady ÚTKO v dalších nákladech <span class="pill">h22</span></div><div class="val num" id="s-h22"></div></div>
           <div class="stat accentt" id="s-h16-card"><div class="lab">Náklady ÚTKO celkem <span class="pill">h16</span></div><div class="val num" id="s-h16"></div></div>
         </div>
 
-        <div class="axisrow" style="margin-top:14px;"><div class="legend">Šířka = h16 = h13 + h14 + h15 · oddělovač dělí vklad na režie (h14) a mzdy (h15). Mění se tažením v mozaice i zde.</div></div>
+        <div class="axisrow" style="margin-top:14px;"><div class="legend">Šířka = h16 = h13 + h14 + h15 + h22 · oddělovač dělí vklad mezi režie (h14) a mzdy (h15). Mění se tažením v mozaice i zde.</div></div>
         <div id="utkobar">
           <div class="useg rezie" id="useg-h14"></div>
           <div class="useg mzdy" id="useg-h15"></div>
+          <div class="useg dalsi" id="useg-h22"></div>
           <div class="useg dopl" id="useg-h13"></div>
           <div class="ulabel" id="ulab-h14"></div>
           <div class="ulabel" id="ulab-h15"></div>
+          <div class="ulabel" id="ulab-h22"></div>
           <div class="ulabel" id="ulab-h13"></div>
           <div class="udiv" id="udiv"><div class="ubar"></div><div class="ugrip"><span></span></div></div>
         </div>
         <div class="utotal" id="utotal"></div>
-        <div class="facnote">↔ Tažením oddělovače (nebo v horní mozaice) přesouváte vklad mezi režiemi (h14) a mzdami (h15). <b>Vklad h14 + h15 zůstává v Kč stejný</b> (= h11); mění se jen jeho rozložení a tím i doplatek h13.</div>
+        <div class="facnote" id="utko-note"></div>
       </div>
     </section>
 
@@ -422,7 +431,7 @@
       <div class="hd"><h2>Výpočtové jádro — všechny hodnoty</h2></div>
       <div class="bd" style="padding-top:6px;">
         <table>
-          <thead><tr><th style="width:40px;">#</th><th>Položka</th><th>Vzorec</th><th class="r">Hodnota</th><th class="r">% rozpočtu</th></tr></thead>
+          <thead><tr><th style="width:40px;">#</th><th>Položka</th><th>Vzorec</th><th class="r">Hodnota</th></tr></thead>
           <tbody id="tbody"></tbody>
         </table>
       </div>
@@ -444,7 +453,9 @@ var nf2 = new Intl.NumberFormat('cs-CZ', {minimumFractionDigits:2, maximumFracti
 function kc(v){ return nf0.format(Math.round(v)) + ' Kč'; }
 function pct(v){ return nf2.format(v) + ' %'; }
 function plainPct(v){ return (Math.round(v*100)/100).toString().replace('.', ','); }
-function plainKc(v){ return String(Math.round(v)); }
+function plainKc(v){ // reprezentace do vstupního pole: finální Kč na jednotky (zaokrouhlení až zde)
+  return String(Math.round(v));
+}
 function parseNum(str){
   if(str===null||str===undefined) return NaN;
   var s = String(str).trim().replace(/[\s\u00A0]/g,'').replace(',', '.');
@@ -524,7 +535,8 @@ function compute(inp){
   var h13=h12-catTot[2];  // doplatek režií = h12 − h7 (h7 = celková režie)
   var h14=vklPart[2];     // Náklady ÚTKO v režiích = h9 (vklad v režiích)
   var h15=vklPart[0];     // Náklady ÚTKO ve mzdách = h3 (vklad ve mzdách)
-  var h16=h13+h14+h15;    // Náklady ÚTKO celkem
+  var h22=vklPart[1];     // Náklady ÚTKO v dalších nákladech = h6 (vklad v dalších)
+  var h16=h13+h14+h15+h22;// Náklady ÚTKO celkem (vč. dalších nákladů)
   // Kompenzace pro ÚTKO – úvazky kmenových zaměstnanců
   var K=1.3338;
   function uvz(x){ return (isNaN(x)?0:x)/100; }
@@ -539,7 +551,7 @@ function compute(inp){
     h1:catTot[0],h2:dotPart[0],h3:vklPart[0],
     h4:catTot[1],h5:dotPart[1],h6:vklPart[1],
     h7:catTot[2],h8:h8,h9:vklPart[2],
-    h10:h10,h11:h11,h12:h12,h13:h13,h14:h14,h15:h15,h16:h16,
+    h10:h10,h11:h11,h12:h12,h13:h13,h14:h14,h15:h15,h22:h22,h16:h16,
     h17:h17,h18:h18,h19:h19,h20:h20,h21:h21,
     f6:f6, p6:f6*100,
     sumPct:(isNaN(inp.p2)?0:inp.p2)+(isNaN(inp.p3)?0:inp.p3)+(isNaN(inp.p4)?0:inp.p4)
@@ -549,6 +561,12 @@ function compute(inp){
 /* ---------- validace ---------- */
 function renderCheck(R){
   var box=$('sumcheck'), txt=$('sumtext');
+  if(!(R.v1>0)){
+    box.className='check bad'; box.querySelector('.ico').textContent='!';
+    txt.innerHTML='Zadejte platný <b>celkový rozpočet (v1) &gt; 0</b>. Bez něj nelze přepočítat žádné částky (vše by bylo 0).';
+    ['f-v2','f-v3','f-v4'].forEach(function(id){ $(id).classList.remove('bad'); });
+    return;
+  }
   var s=Math.round(R.sumPct*100)/100;
   var ok=Math.abs(s-100)<0.005;
   box.className='check '+(ok?'ok':'bad');
@@ -616,6 +634,7 @@ function layoutMosaic(R){
     E.vl.style.display='flex'; E.vl.style.left=x+'px'; E.vl.style.top=(topPad+usableH-2)+'px'; E.vl.style.maxWidth=Math.max(colW-4,86)+'px';
     E.vl.innerHTML=chipHTML(CATS[i].name,'vklad',R.vklPart[i],R.v1);
     E.div.style.display='flex'; E.div.style.left=x+'px'; E.div.style.width=colW+'px'; E.div.style.top=(colTop+dotH)+'px';
+    E.div.classList.toggle('locked', nVis<=1);
     x+=colW+GAP;
   }
 }
@@ -669,7 +688,26 @@ function applyDrag(j,fracDesired){
     }
     remaining-=applied; active=next;
   }
+  // bezpečnostní korekce: případný numerický zbytek vrátíme do tažené kategorie,
+  // aby součet vkladu zůstal přesně P (mozaika i tabulka pak souhlasí na korunu)
+  if(Math.abs(remaining)>1e-9){ V[j]=Math.max(0,Math.min(catTot[j], V[j]+remaining)); }
   for(var m=0;m<3;m++){ splits[m]=catTot[m]>0?V[m]/catTot[m]:0; }
+}
+
+/* Výměna vkladu jen mezi dvěma kategoriemi (i ↔ j), ostatní drží na místě.
+   Používá ÚTKO pruh: drží další náklady (h6) i celkový vklad konstantní. */
+function exchangeVklad(i,j,desiredVi){
+  var inp=readInputs(); var v1=isNaN(inp.v1)?0:inp.v1;
+  var f=[(isNaN(inp.p2)?0:inp.p2)/100,(isNaN(inp.p3)?0:inp.p3)/100,(isNaN(inp.p4)?0:inp.p4)/100];
+  var catTot=[v1*f[0],v1*f[1],v1*f[2]];
+  if(catTot[i]<=0 && catTot[j]<=0) return;
+  var pool=splits[i]*catTot[i]+splits[j]*catTot[j];
+  var newVi=Math.max(0, Math.min(Math.min(catTot[i],pool), desiredVi));
+  var newVj=pool-newVi;
+  if(newVj>catTot[j]){ newVj=catTot[j]; newVi=pool-newVj; }
+  newVi=Math.max(0,Math.min(catTot[i],newVi));
+  splits[i]=catTot[i]>0?newVi/catTot[i]:0;
+  splits[j]=catTot[j]>0?newVj/catTot[j]:0;
 }
 
 /* ---------- ÚTKO vizualizace (propojená) ---------- */
@@ -681,14 +719,16 @@ function buildUtko(){
   d.addEventListener('pointermove',function(e){
     if(!UT.drag) return;
     var R=compute(readInputs());
+    var pool=R.h14+R.h15;
+    if(pool<=0 || R.catTot[2]<=0) return;   // není co rozdělovat mezi mzdy/režie
     var rect=UT.host.getBoundingClientRect(); var W=UT.host.clientWidth;
     var x=e.clientX-rect.left;
     var tot=R.h16>0?R.h16:1;
-    var regionW=W*((R.h14+R.h15)/tot);          // pixelová šířka bloku vkladu h14+h15
-    if(regionW<=0 || R.h7<=0) return;
-    var frac=Math.max(0,Math.min(1,x/regionW)); // podíl h14 (režie) v bloku vkladu
-    var desiredH14=frac*(R.h14+R.h15);          // požadovaný vklad v režiích
-    ensureNerovno(); applyDrag(2, desiredH14/R.h7); update();
+    var regionW=W*(pool/tot);
+    if(regionW<=0) return;
+    var frac=Math.max(0,Math.min(1,x/regionW));
+    var desiredH14=frac*pool;               // požadovaný vklad v režiích
+    ensureNerovno(); exchangeVklad(2,0,desiredH14); update();
   });
   function end(e){ if(UT.drag){ UT.drag=false; d.classList.remove('active'); try{d.releasePointerCapture(e.pointerId);}catch(_){} } }
   d.addEventListener('pointerup',end); d.addEventListener('pointercancel',end);
@@ -697,19 +737,31 @@ function layoutUtko(R){
   if(!UT.built) buildUtko();
   var host=UT.host, W=host.clientWidth;
   var tot=R.h16>0?R.h16:1;
-  var w14=W*(R.h14/tot), w15=W*(R.h15/tot), w13=W*(R.h13/tot);
-  // pořadí: h14 (režie) | h15 (mzdy) | h13 (doplatek)
+  var w14=W*(R.h14/tot), w15=W*(R.h15/tot), w22=W*(R.h22/tot), w13=W*(R.h13/tot);
+  // pořadí: h14 (režie) | h15 (mzdy) | h22 (další) | h13 (doplatek)
   $('useg-h14').style.left='0px'; $('useg-h14').style.width=Math.max(0,w14)+'px';
   $('useg-h15').style.left=Math.max(0,w14)+'px'; $('useg-h15').style.width=Math.max(0,w15)+'px';
-  $('useg-h13').style.left=Math.max(0,w14+w15)+'px'; $('useg-h13').style.width=Math.max(0,w13)+'px';
+  $('useg-h22').style.left=Math.max(0,w14+w15)+'px'; $('useg-h22').style.width=Math.max(0,w22)+'px';
+  $('useg-h13').style.left=Math.max(0,w14+w15+w22)+'px'; $('useg-h13').style.width=Math.max(0,w13)+'px';
   var l14=$('ulab-h14'); l14.style.left='8px'; l14.style.right='auto'; l14.style.top='10px'; l14.style.alignItems='flex-start';
   l14.innerHTML='<span class="ul-top">v režiích · h14</span><span class="ul-val num">'+kc(R.h14)+'</span>';
   var l15=$('ulab-h15'); l15.style.left=Math.max(8,w14+8)+'px'; l15.style.right='auto'; l15.style.top='48px'; l15.style.alignItems='flex-start';
   l15.innerHTML='<span class="ul-top">ve mzdách · h15</span><span class="ul-val num">'+kc(R.h15)+'</span>';
-  var l13=$('ulab-h13'); l13.style.right='8px'; l13.style.left='auto'; l13.style.top='10px'; l13.style.alignItems='flex-end';
+  var l22=$('ulab-h22'); l22.style.left=Math.max(8,w14+w15+8)+'px'; l22.style.right='auto'; l22.style.top='10px'; l22.style.alignItems='flex-start';
+  l22.style.display = R.h22>0.5 ? 'flex' : 'none';
+  l22.innerHTML='<span class="ul-top">další · h22</span><span class="ul-val num">'+kc(R.h22)+'</span>';
+  var l13=$('ulab-h13'); l13.style.right='8px'; l13.style.left='auto'; l13.style.top='48px'; l13.style.alignItems='flex-end';
   l13.innerHTML='<span class="ul-top">doplatek · h13</span><span class="ul-val num">'+kc(R.h13)+'</span>';
   $('udiv').style.left=Math.max(0,w14)+'px';
-  $('utotal').innerHTML='Celkem h16 = <b class="num">'+kc(R.h16)+'</b> = doplatek h13 <b class="num">'+kc(R.h13)+'</b> + vklad h14+h15 <b class="num">'+kc(R.h14+R.h15)+'</b>';
+  var canDrag = (R.catTot[0]>0 && R.catTot[2]>0) && ((R.h14+R.h15)>0);
+  $('udiv').classList.toggle('locked', !canDrag);
+  $('utotal').innerHTML='Celkem h16 = <b class="num">'+kc(R.h16)+'</b> = doplatek h13 <b class="num">'+kc(R.h13)+'</b> + vklad (h14+h15+h22) <b class="num">'+kc(R.h14+R.h15+R.h22)+'</b>';
+  var note=$('utko-note');
+  if(R.h22>0.5){
+    note.innerHTML='↔ Oddělovač zde přesouvá vklad mezi režiemi (h14) a mzdami (h15); další náklady (h22 = <b>'+kc(R.h22)+'</b>) i doplatek h13 přitom drží. Protože vklad h14 + h15 + h22 = celkový vklad h11 a h13 = h12 − h7, je <b>h16 = (h12 − h7) + h11 konstantní</b> i při tažení v horní mozaice.';
+  } else {
+    note.innerHTML='↔ Tažením oddělovače (zde nebo v horní mozaice) měníte rozdělení vkladu mezi režie (h14) a mzdy (h15). Vklad h14 + h15 + h22 = celkový vklad h11, takže <b>h16 zůstává konstantní</b> — mění se jen rozdělení a tím doplatek h13.';
+  }
 }
 
 /* ---------- fakultní sekce ---------- */
@@ -729,9 +781,11 @@ function renderUTKO(R){
   $('s-h13-card').classList.toggle('pos',R.h13>=0); $('s-h13-card').classList.toggle('neg',R.h13<0);
   $('s-h14').textContent=(R.h14<0?'− ':'')+kc(Math.abs(R.h14));
   $('s-h15').textContent=(R.h15<0?'− ':'')+kc(Math.abs(R.h15));
+  $('s-h22').textContent=(R.h22<0?'− ':'')+kc(Math.abs(R.h22));
   $('s-h16').textContent=(R.h16<0?'− ':'')+kc(Math.abs(R.h16));
   $('s-h14-card').classList.toggle('neg',R.h14<0); $('s-h14-card').classList.toggle('pos',R.h14>=0);
   $('s-h15-card').classList.toggle('neg',R.h15<0); $('s-h15-card').classList.toggle('pos',R.h15>=0);
+  $('s-h22-card').classList.toggle('neg',R.h22<0); $('s-h22-card').classList.toggle('pos',R.h22>=0);
   layoutUtko(R);
 }
 function renderKomp(R){
@@ -739,11 +793,21 @@ function renderKomp(R){
   $('s-h18').textContent=kc(R.h18);
   $('s-h19').textContent=kc(R.h19);
   $('s-h20').textContent=kc(R.h20);
-  $('s-h21').textContent=(R.h21<0?'− ':'+ ')+kc(Math.abs(R.h21));
-  var row=$('komp-diff'); row.classList.toggle('neg',R.h21<0); row.classList.toggle('pos',R.h21>=0);
-  var n=$('kompnote');
-  if(R.h21<0) n.innerHTML='h21 = h20 − h16. Hodnota je <b>záporná</b> → pro ÚTKO <b>peníze chybí</b> (schází '+kc(Math.abs(R.h21))+'). Kladné číslo by znamenalo, že peníze pro ÚTKO přebývají.';
-  else n.innerHTML='h21 = h20 − h16. Hodnota je <b>kladná</b> → pro ÚTKO <b>peníze přebývají</b> ('+kc(R.h21)+'). Záporné číslo by znamenalo, že pro ÚTKO peníze chybí.';
+  var row=$('komp-diff'); var n=$('kompnote');
+  var zero = (Math.round(R.h21)===0);   // pásmo necitlivosti na úrovni prezentace (1 Kč)
+  if(zero){
+    $('s-h21').textContent=kc(0);
+    row.classList.remove('neg'); row.classList.remove('pos');
+    n.innerHTML='h21 = h20 − h16 ≈ <b>0 Kč</b> → rozpočet ÚTKO je <b>vyrovnaný</b> (rozdíl je v rámci zaokrouhlení na koruny).';
+  } else if(R.h21<0){
+    $('s-h21').textContent='− '+kc(Math.abs(R.h21));
+    row.classList.add('neg'); row.classList.remove('pos');
+    n.innerHTML='h21 = h20 − h16. Hodnota je <b>záporná</b> → pro ÚTKO <b>peníze chybí</b> (schází '+kc(Math.abs(R.h21))+'). Kladné číslo by znamenalo, že peníze pro ÚTKO přebývají.';
+  } else {
+    $('s-h21').textContent='+ '+kc(R.h21);
+    row.classList.add('pos'); row.classList.remove('neg');
+    n.innerHTML='h21 = h20 − h16. Hodnota je <b>kladná</b> → pro ÚTKO <b>peníze přebývají</b> ('+kc(R.h21)+'). Záporné číslo by znamenalo, že pro ÚTKO peníze chybí.';
+  }
 }
 
 /* ---------- tabulka ---------- */
@@ -751,9 +815,9 @@ function pctOf(R,v){ return R.v1>0?v/R.v1*100:0; }
 function dotsw(varName){ return '<span class="dotline" style="background:'+cssVar(varName)+'"></span>'; }
 function row(R,num,name,formula,val,opts){
   opts=opts||{};
-  return '<tr class="'+(opts.cls||'')+'"><td class="num">'+num+'</td><td>'+(opts.swatch||'')+name+'</td><td class="formula">'+formula+'</td><td class="r num">'+kc(val)+'</td><td class="r num">'+pct(pctOf(R,val))+'</td></tr>';
+  return '<tr class="'+(opts.cls||'')+'"><td class="num">'+num+'</td><td>'+(opts.swatch||'')+name+'</td><td class="formula">'+formula+'</td><td class="r num">'+kc(val)+'</td></tr>';
 }
-function grp(label,cls){ return '<tr class="group '+(cls||'')+'"><td></td><td colspan="4">'+label+'</td></tr>'; }
+function grp(label,cls){ return '<tr class="group '+(cls||'')+'"><td></td><td colspan="3">'+label+'</td></tr>'; }
 function renderTable(R){
   var t='';
   t+=grp('Mzdové prostředky');
@@ -776,7 +840,8 @@ function renderTable(R){
   t+=row(R,'h13','Doplatek režií fakultě','h12 − h7',R.h13);
   t+=row(R,'h14','Náklady ÚTKO v režiích','h9',R.h14);
   t+=row(R,'h15','Náklady ÚTKO ve mzdách','h3',R.h15);
-  t+=row(R,'h16','Náklady ÚTKO celkem','h13 + h14 + h15',R.h16,{cls:'total'});
+  t+=row(R,'h22','Náklady ÚTKO v dalších nákladech','h6',R.h22);
+  t+=row(R,'h16','Náklady ÚTKO celkem','h13 + h14 + h15 + h22',R.h16,{cls:'total'});
   t+=grp('Kompenzace pro ÚTKO','komp');
   t+=row(R,'h17','Superhrubá mzda č. 1','(v7 / 100) × v8 × 1,3338 × v13',R.h17);
   t+=row(R,'h18','Superhrubá mzda č. 2','(v9 / 100) × v10 × 1,3338 × v14',R.h18);
@@ -791,9 +856,14 @@ function setSuffix(id){ var s=$('suf-'+id); if(s) s.textContent=fieldMode[id]===
 function refreshConversions(R){
   ['v2','v3','v4','v5','v6','m0','m1','m2'].forEach(function(id){
     var el=$('cv-'+id); if(!el) return;
-    var base=baseFor(id,R); var curPct=representedPct(id,R); var kcVal=base*curPct/100;
-    if(fieldMode[id]==='kc') el.innerHTML='= <b>'+pct(curPct)+'</b>';
-    else el.innerHTML='= <b>'+kc(kcVal)+'</b>';
+    var base=baseFor(id,R); var curPct=representedPct(id,R);
+    if(fieldMode[id]==='kc'){
+      if(base>0) el.innerHTML='= <b>'+pct(curPct)+'</b>';
+      else el.innerHTML='<span class="convwarn">nelze přepočíst na % (základ = 0)</span>';
+    } else {
+      if(base>0) el.innerHTML='= <b>'+kc(base*curPct/100)+'</b>';
+      else el.innerHTML='<span class="convwarn">nelze přepočíst na Kč (chybí základ)</span>';
+    }
   });
 }
 function refreshDerivedInputs(R){
@@ -889,6 +959,21 @@ $('presetSmarteon').addEventListener('click',function(){
   });
   $('v7').value='20'; $('v9').value='20'; $('v11').value='10';
   update();
+});
+
+// GAČR JJ – načte uvedené hodnoty, ostatní nastaví na výchozí stav webu
+$('presetGacr').addEventListener('click',function(){
+  // režimy: v2,v3,v4,v5 -> Kč; v6,m0,m1,m2 -> % (výchozí)
+  ['v2','v3','v4','v5'].forEach(function(id){ fieldMode[id]='kc'; setSuffix(id); markToggle(id); });
+  ['v6','m0','m1','m2'].forEach(function(id){ fieldMode[id]='pct'; setSuffix(id); markToggle(id); });
+  $('v1').value='2633000';
+  $('v2').value='1808000'; $('v3').value='431000'; $('v4').value='394000';
+  $('v5').value='268000';
+  $('v6').value='22,38';                              // výchozí stav webu
+  $('v7').value='20';  $('v8').value='40500';  $('v13').value='12';
+  $('v9').value='0';   $('v10').value='0';     $('v14').value='12';   // řádek 2 vynulován
+  $('v11').value='0';  $('v12').value='0';     $('v15').value='12';   // řádek 3 vynulován
+  setDist('rovno');
 });
 
 var PRESETS={
