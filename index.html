@@ -411,15 +411,16 @@
     <section class="panel">
       <div class="hd"><h2>Kompenzace pro ÚTKO</h2><span class="sub">úvazky kmenových zaměstnanců · h17–h21</span></div>
       <div class="bd" style="padding-top:10px;">
-        <div class="kfx">Superhrubá mzda = úvazek (v %) ÷ 100 × jednotková mzda × 1,3338 (koeficient superhrubé mzdy) × počet měsíců.</div>
+        <div class="kfx">Superhrubá mzda = úvazek (v %) ÷ 100 × jednotková hrubá mzda × (1 + odvody/100) × počet měsíců. Koeficient odvodů (v16–v18) je editovatelný pro každý řádek zvlášť.</div>
         <table class="komp">
-          <thead><tr><th style="width:34px;">#</th><th>Úvazek</th><th>Jednotková hrubá mzda</th><th>Počet měsíců</th><th class="r">Superhrubá mzda (včetně odvodů)</th></tr></thead>
+          <thead><tr><th style="width:34px;">#</th><th>Úvazek</th><th>Jednotková hrubá mzda</th><th>Počet měsíců</th><th>Odvody</th><th class="r">Superhrubá mzda (včetně odvodů)</th></tr></thead>
           <tbody>
             <tr>
               <td class="num">1</td>
               <td><div class="cin"><span class="vcode">v7</span><span class="iw"><input id="v7" type="text" inputmode="decimal" value="10"><span class="us">%</span></span></div></td>
               <td><div class="cin"><span class="vcode">v8</span><span class="iw"><input id="v8" type="text" inputmode="numeric" value="45000"><span class="us">Kč</span></span></div></td>
               <td><div class="cin narrow"><span class="vcode">v13</span><span class="iw"><input id="v13" type="text" inputmode="numeric" value="12"><span class="us">měs.</span></span></div></td>
+              <td><div class="cin narrow"><span class="vcode">v16</span><span class="iw"><input id="v16" type="text" inputmode="decimal" value="35,22"><span class="us">%</span></span></div></td>
               <td class="r num" id="s-h17"></td>
             </tr>
             <tr>
@@ -427,6 +428,7 @@
               <td><div class="cin"><span class="vcode">v9</span><span class="iw"><input id="v9" type="text" inputmode="decimal" value="10"><span class="us">%</span></span></div></td>
               <td><div class="cin"><span class="vcode">v10</span><span class="iw"><input id="v10" type="text" inputmode="numeric" value="45000"><span class="us">Kč</span></span></div></td>
               <td><div class="cin narrow"><span class="vcode">v14</span><span class="iw"><input id="v14" type="text" inputmode="numeric" value="12"><span class="us">měs.</span></span></div></td>
+              <td><div class="cin narrow"><span class="vcode">v17</span><span class="iw"><input id="v17" type="text" inputmode="decimal" value="35,22"><span class="us">%</span></span></div></td>
               <td class="r num" id="s-h18"></td>
             </tr>
             <tr>
@@ -434,10 +436,11 @@
               <td><div class="cin"><span class="vcode">v11</span><span class="iw"><input id="v11" type="text" inputmode="decimal" value="10"><span class="us">%</span></span></div></td>
               <td><div class="cin"><span class="vcode">v12</span><span class="iw"><input id="v12" type="text" inputmode="numeric" value="45000"><span class="us">Kč</span></span></div></td>
               <td><div class="cin narrow"><span class="vcode">v15</span><span class="iw"><input id="v15" type="text" inputmode="numeric" value="12"><span class="us">měs.</span></span></div></td>
+              <td><div class="cin narrow"><span class="vcode">v18</span><span class="iw"><input id="v18" type="text" inputmode="decimal" value="35,22"><span class="us">%</span></span></div></td>
               <td class="r num" id="s-h19"></td>
             </tr>
-            <tr class="total"><td></td><td colspan="3">Celková kompenzace kmenovým zaměstnancům <span class="pill">h20</span> = h17 + h18 + h19</td><td class="r"><div class="num" id="s-h20"></div><div class="peryear" id="y-h20"></div></td></tr>
-            <tr class="diff" id="komp-diff"><td></td><td colspan="3">Rozdíl pro ÚTKO <span class="pill">h21</span> = h20 − h16</td><td class="r"><div class="num" id="s-h21"></div><div class="peryear" id="y-h21"></div></td></tr>
+            <tr class="total"><td></td><td colspan="4">Celková kompenzace kmenovým zaměstnancům <span class="pill">h20</span> = h17 + h18 + h19</td><td class="r"><div class="num" id="s-h20"></div><div class="peryear" id="y-h20"></div></td></tr>
+            <tr class="diff" id="komp-diff"><td></td><td colspan="4">Rozdíl pro ÚTKO <span class="pill">h21</span> = h20 − h16</td><td class="r"><div class="num" id="s-h21"></div><div class="peryear" id="y-h21"></div></td></tr>
           </tbody>
         </table>
         <div class="facnote" id="kompnote"></div>
@@ -535,7 +538,8 @@ function readInputs(){
     v7: parseNum($('v7').value), v8: parseNum($('v8').value),
     v9: parseNum($('v9').value), v10: parseNum($('v10').value),
     v11: parseNum($('v11').value), v12: parseNum($('v12').value),
-    v13: parseNum($('v13').value), v14: parseNum($('v14').value), v15: parseNum($('v15').value)
+    v13: parseNum($('v13').value), v14: parseNum($('v14').value), v15: parseNum($('v15').value),
+    v16: parseNum($('v16').value), v17: parseNum($('v17').value), v18: parseNum($('v18').value)
   };
 }
 function baseFor(id,R){
@@ -579,12 +583,14 @@ function compute(inp){
   var h22=vklPart[1];     // Náklady ÚTKO v dalších nákladech = h6 (vklad v dalších)
   var h16=h13+h14+h15+h22;// Náklady ÚTKO celkem (vč. dalších nákladů)
   // Kompenzace pro ÚTKO – úvazky kmenových zaměstnanců
-  var K=1.3338;
   function uvz(x){ return (isNaN(x)?0:x)/100; }
   function castka(x){ return isNaN(x)?0:x; }
-  var h17=uvz(inp.v7)*castka(inp.v8)*K*castka(inp.v13);
-  var h18=uvz(inp.v9)*castka(inp.v10)*K*castka(inp.v14);
-  var h19=uvz(inp.v11)*castka(inp.v12)*K*castka(inp.v15);
+  var k16 = 1 + castka(isNaN(inp.v16)?35.22:inp.v16)/100;
+  var k17 = 1 + castka(isNaN(inp.v17)?35.22:inp.v17)/100;
+  var k18 = 1 + castka(isNaN(inp.v18)?35.22:inp.v18)/100;
+  var h17=uvz(inp.v7)*castka(inp.v8)*k16*castka(inp.v13);
+  var h18=uvz(inp.v9)*castka(inp.v10)*k17*castka(inp.v14);
+  var h19=uvz(inp.v11)*castka(inp.v12)*k18*castka(inp.v15);
   var h20=h17+h18+h19;
   var h21=h20-h16;
   return {
@@ -892,9 +898,9 @@ function renderTable(R){
   t+=row(R,'h22','Náklady ÚTKO v dalších nákladech','h6',R.h22);
   t+=row(R,'h16','Náklady ÚTKO celkem','h13 + h14 + h15 + h22',R.h16,{cls:'total'});
   t+=grp('Kompenzace pro ÚTKO','komp');
-  t+=row(R,'h17','Superhrubá mzda č. 1','(v7 / 100) × v8 × 1,3338 × v13',R.h17);
-  t+=row(R,'h18','Superhrubá mzda č. 2','(v9 / 100) × v10 × 1,3338 × v14',R.h18);
-  t+=row(R,'h19','Superhrubá mzda č. 3','(v11 / 100) × v12 × 1,3338 × v15',R.h19);
+  t+=row(R,'h17','Superhrubá mzda č. 1','(v7 / 100) × v8 × (1 + v16/100) × v13',R.h17);
+  t+=row(R,'h18','Superhrubá mzda č. 2','(v9 / 100) × v10 × (1 + v17/100) × v14',R.h18);
+  t+=row(R,'h19','Superhrubá mzda č. 3','(v11 / 100) × v12 × (1 + v18/100) × v15',R.h19);
   t+=row(R,'h20','Celková kompenzace kmenovým zaměstnancům','h17 + h18 + h19',R.h20,{cls:'total'});
   t+=row(R,'h21','Rozdíl pro ÚTKO','h20 − h16',R.h21,{cls:'total'});
   $('tbody').innerHTML=t;
@@ -983,6 +989,9 @@ var TIPS={
   v13:'<b>v13 — Počet měsíců (řádek 1)</b><br>Délka úvazku v měsících. Předvyplní se z počtu měsíců řešení (v0), lze upravit ručně.',
   v14:'<b>v14 — Počet měsíců (řádek 2)</b><br>Délka úvazku v měsících. Předvyplní se z počtu měsíců řešení (v0), lze upravit ručně.',
   v15:'<b>v15 — Počet měsíců (řádek 3)</b><br>Délka úvazku v měsících. Předvyplní se z počtu měsíců řešení (v0), lze upravit ručně.',
+  v16:'<b>v16 — Odvody (řádek 1)</b><br>Sazba odvodů zaměstnavatele v % pro výpočet superhrubé mzdy č. 1. Koeficient = 1 + v16/100. Výchozí hodnota 35,22&nbsp;%, předvolba Smarteon 33,8&nbsp;%.',
+  v17:'<b>v17 — Odvody (řádek 2)</b><br>Sazba odvodů zaměstnavatele v % pro výpočet superhrubé mzdy č. 2. Koeficient = 1 + v17/100. Výchozí hodnota 35,22&nbsp;%, předvolba Smarteon 33,8&nbsp;%.',
+  v18:'<b>v18 — Odvody (řádek 3)</b><br>Sazba odvodů zaměstnavatele v % pro výpočet superhrubé mzdy č. 3. Koeficient = 1 + v18/100. Výchozí hodnota 35,22&nbsp;%, předvolba Smarteon 33,8&nbsp;%.',
   m0:'<b>Vklad — mzdy</b><br>Podíl vlastního vkladu v kategorii mzdové prostředky (% z v2, nebo Kč). Slouží k nerovnoměrnému rozdělení vkladu.',
   m1:'<b>Vklad — další náklady</b><br>Podíl vlastního vkladu v kategorii další náklady (% z v3, nebo Kč).',
   m2:'<b>Vklad — režie</b><br>Podíl vlastního vkladu v kategorii režie (% z v4, nebo Kč).',
@@ -1003,9 +1012,9 @@ var TIPS={
   h15:'<b>h15 — Náklady ÚTKO ve mzdách</b><br>= vlastní vklad v kategorii mzdy (mzdy z vkladu, h3).',
   h22:'<b>h22 — Náklady ÚTKO v dalších nákladech</b><br>= vlastní vklad v kategorii další náklady (další náklady z vkladu, h6).',
   h16:'<b>h16 — Náklady ÚTKO celkem</b><br>= doplatek režií fakultě (h13) + náklady ÚTKO v režiích (h14) + ve mzdách (h15) + v dalších nákladech (h22).',
-  h17:'<b>h17 — Superhrubá mzda č. 1</b><br>Celková cena práce vč. odvodů = úvazek (v7)/100 × jednotková hrubá mzda (v8) × 1,3338 × počet měsíců (v13).',
-  h18:'<b>h18 — Superhrubá mzda č. 2</b><br>Celková cena práce vč. odvodů = úvazek (v9)/100 × jednotková hrubá mzda (v10) × 1,3338 × počet měsíců (v14).',
-  h19:'<b>h19 — Superhrubá mzda č. 3</b><br>Celková cena práce vč. odvodů = úvazek (v11)/100 × jednotková hrubá mzda (v12) × 1,3338 × počet měsíců (v15).',
+  h17:'<b>h17 — Superhrubá mzda č. 1</b><br>Celková cena práce vč. odvodů = úvazek (v7)/100 × jednotková hrubá mzda (v8) × (1 + odvody (v16)/100) × počet měsíců (v13).',
+  h18:'<b>h18 — Superhrubá mzda č. 2</b><br>Celková cena práce vč. odvodů = úvazek (v9)/100 × jednotková hrubá mzda (v10) × (1 + odvody (v17)/100) × počet měsíců (v14).',
+  h19:'<b>h19 — Superhrubá mzda č. 3</b><br>Celková cena práce vč. odvodů = úvazek (v11)/100 × jednotková hrubá mzda (v12) × (1 + odvody (v18)/100) × počet měsíců (v15).',
   h20:'<b>h20 — Celková kompenzace</b><br>Součet superhrubých mezd: č. 1 (h17) + č. 2 (h18) + č. 3 (h19).',
   h21:'<b>h21 — Rozdíl pro ÚTKO</b><br>= celková kompenzace (h20) − náklady ÚTKO celkem (h16). Kladné: kompenzace převyšuje náklady; záporné: kompenzace nestačí; ≈ 0: vyrovnáno.'
 };
@@ -1043,7 +1052,7 @@ function update(){
 function copyV0(){ var v=$('v0').value; $('v13').value=v; $('v14').value=v; $('v15').value=v; }
 $('v0').addEventListener('input', function(){ copyV0(); update(); });
 ['v1','v2','v3','v4','v6'].forEach(function(id){ $(id).addEventListener('input', update); });
-['v7','v8','v9','v10','v11','v12','v13','v14','v15'].forEach(function(id){ $(id).addEventListener('input', update); });
+['v7','v8','v9','v10','v11','v12','v13','v14','v15','v16','v17','v18'].forEach(function(id){ $(id).addEventListener('input', update); });
 $('v5').addEventListener('input', function(){
   if(distMode==='nerovno') rescaleFromV5();
   update();
@@ -1115,7 +1124,8 @@ $('resetSplits').addEventListener('click',function(){ setDist('rovno'); });
 function presetReset(){
   ['v2','v3','v4','v5','v6','m0','m1','m2'].forEach(function(id){ fieldMode[id]='pct'; setSuffix(id); markToggle(id); });
   var B={v0:'12',v1:'1000000',v2:'83,33',v3:'0,00',v4:'16,67',v5:'15',v6:'22,38',
-         v7:'10',v8:'45000',v9:'10',v10:'45000',v11:'10',v12:'45000',v13:'12',v14:'12',v15:'12'};
+         v7:'10',v8:'45000',v9:'10',v10:'45000',v11:'10',v12:'45000',v13:'12',v14:'12',v15:'12',
+         v16:'35,22',v17:'35,22',v18:'35,22'};
   Object.keys(B).forEach(function(id){ $(id).value=B[id]; });
   distMode='rovno';
 }
@@ -1128,6 +1138,7 @@ $('presetSmarteon').addEventListener('click',function(){
   });
   $('v1').value='3610674';
   $('v7').value='20'; $('v9').value='20'; $('v11').value='10';
+  $('v16').value='33,8'; $('v17').value='33,8'; $('v18').value='33,8';
   // vlastní vklad (v5) není v zadání Smarteonu uveden → ponechán na výchozích 15 %
   copyV0();
   setDist('rovno');
